@@ -4,19 +4,53 @@
 <head>
   <title>Just扫雷</title>
   <style>
+    #parent {
+      position: relative;
+    }
+    #layer {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.5);
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      text-align: center;
+    }
+    #layer .layerCenter {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      -webkit-transform: translate(-50%,-50%);
+      -moz-transform: translate(-50%,-50%);
+    }
+
     #tool {
       width: 100%;
       height: 50px;
     }
-    #state {
+
+    #tool #time {
+      color: red;
+      text-align: right;
+    }
+
+    #tool #state {
       font-weight: bold;
       color: red;
+      text-align: center;
     }
-    table {
+
+    #tool #mine {
+      color: red;
+      text-align: left;
+    }
+
+    #game table {
       border-spacing: 0;
     }
 
-    td {
+    #game td {
       box-sizing: border-box;
       background: lightgray;
       border: 1px solid gray;
@@ -24,75 +58,78 @@
       vertical-align: middle;
     }
 
-    td.normal {
+    #game td.normal {
       border-left: 2px solid #ededed;
       border-top: 2px solid #ededed;
       border-right: 2px solid gray;
       border-bottom: 2px solid gray;
     }
 
-    td.normal:hover {
+    #game td.normal:hover {
       border-left: 2px solid gray;
       border-top: 2px solid gray;
       border-right: 2px solid #ededed;
       border-bottom: 2px solid #ededed;
     }
 
-    td.mark {
+    #game td.mark {
       font-weight: bold;
       border-left: 2px solid #ededed;
       border-top: 2px solid #ededed;
       border-right: 2px solid gray;
       border-bottom: 2px solid gray;
     }
-    td.mark.flag::after {
+
+    #game td.mark.flag::after {
       color: red;
       content: '!';
     }
-    td.mark.nosure::after {
+
+    #game td.mark.nosure::after {
       content: '?';
     }
 
-    td.number {
+    #game td.number {
       font-weight: bold;
     }
 
-    td.number.d1 {
+    #game td.number.d1 {
       color: blue;
     }
 
-    td.number.d2 {
+    #game td.number.d2 {
       color: green;
     }
 
-    td.number.d3 {
+    #game td.number.d3 {
       color: red;
     }
 
-    td.number.d4 {
+    #game td.number.d4 {
       color: darkblue;
     }
 
-    td.number.d5 {
+    #game td.number.d5 {
       color: darkred;
     }
 
-    td.number.d6 {
+    #game td.number.d6 {
       color: darkcyan;
     }
 
-    td.number.d7 {
+    #game td.number.d7 {
       color: black;
     }
 
-    td.number.d8 {
+    #game td.number.d8 {
       color: gray;
     }
 
-    td.mine::after {
+    #game td.mine::after {
       content: '✪'
     }
-    td.mine.boom {
+
+    #game td.mine.boom {
       color: red;
     }
   </style>
@@ -101,13 +138,50 @@
 <body>
   <div id="parent">
     <div id="tool">
-      <input type="radio" name="action" id="openAction" value="open" checked/>翻开
-      <input type="radio" name="action" id="markAction" value="mark"/>标记
-      <span id="state"></span>
+      <table style="width:100%">
+        <tr>
+          <td colspan="3">
+            <input type="radio" name="action" id="openAction" value="open" checked />翻开
+            <input type="radio" name="action" id="markAction" value="mark" />标记
+          </td>
+        </tr>
+        <tr>
+          <td id="mine"></td>
+          <td id="state"></td>
+          <td id="time"></td>
+        </tr>
+      </table>
     </div>
     <div id="game"></div>
+    <div id="layer" hidden>
+      <div class="layerCenter">
+          <button id="openBtn">翻开</button>
+          <button id="markBtn">标记</button>
+      </div>
+    </div>
   </div>
   <script type="text/javascript">
+    Object.prototype.longClick = function (fun, time) {
+      if(!time) time = 500;
+      if (/Android|webOS|iPhone|iPod|BlackBerry|iPad|IEMobile|Nexus/i.test(navigator.userAgent)) {
+        this.addEventListener('touchstart', function ($event) {
+          var a = setTimeout(fun, time, $event)
+          this.addEventListener('touchend', function () {
+            clearTimeout(a)
+          })
+        })
+      } else {
+        this.addEventListener('mousedown', function ($event) {
+          var a = setTimeout(fun, time, $event)
+          this.addEventListener('mouseup', function () {
+            clearTimeout(a)
+          })
+        })
+      }
+    }
+    var layer = {
+      cellEvent: null
+    }
     var classNames = {
       normal: 'normal',
       number: 'number',
@@ -129,23 +203,32 @@
       cells: [],
       mines: [],
       state: states.loading,
-      opens: [],
-      stateElem: null
+      opens: []
     };
+    var tool = {
+      _mine: 0,
+      _state: states.loading,
+      _time: 0,
+
+      get mine() { return this._mine; },
+      set mine(v) { this._mine = v; document.getElementById('mine').innerText = '✪' + v; },
+
+      get state() { return this._state; },
+      set state(v) { this._state = v; document.getElementById('state').innerText = v; },
+
+      get time() { return this._time; },
+      set time(v) { this._time = v; document.getElementById('time').innerText = v + '秒'; }
+    }
     var settings = {
       hCount: 9,
       vCount: 9,
       mCount: 10
     };
 
-    var setState = function(state) {
-      options.state = state;
-      options.stateElem.innerText = state;
-    }
-
     var newGame = function () {
-      options.stateElem = document.getElementById('state');
-      setState(states.loading);
+      tool.time = 0;
+      tool.state = states.loading;
+      tool.mine = settings.mCount;
       options.mines = [];
       options.cells = [];
       options.opens = [];
@@ -163,7 +246,8 @@
           td.style.height = options.mineSize + "px";
           td.className = classNames.normal;
           td.setAttribute('n', cellIndex);
-          td.onclick = leftClick;
+          td.click = cellClick;
+          td.longClick(cellHold);
           tr.appendChild(td);
           options.cells.push(cellIndex);
         }
@@ -171,66 +255,74 @@
       }
       game.innerHTML = "";
       game.appendChild(table);
+      document.body.style.width = options.mineSize * settings.hCount + 'px';
 
-      setState(states.newGame);
+      tool.state = states.newGame;
     }
-
     var setMines = function (startPoint) {
       console.debug('setMines:' + startPoint);
-      setState(states.loading);
+      tool.state = states.loading;
 
       options.mines = [];
       var cells = options.cells.concat();
-      while(options.mines.length < settings.mCount) {
+      while (options.mines.length < settings.mCount) {
         var index = randomInt(0, cells.length - 1);
         var cell = cells[index];
         cells.splice(index, 1);
-        if(!startPoint || cell !== startPoint)
+        if (!startPoint || cell !== startPoint)
           options.mines.push(cell);
       }
 
-      setState(states.playing);
+      tool.state = states.playing;
     }
 
-    var leftClick = function($event){
-      if(options.state !== states.newGame && options.state !== states.playing) {
+    var cellHold = function ($event) {
+      layer.cellEvent = $event;
+      document.getElementById('layer').hidden = false;
+    }
+    var cellClick = function ($event) {
+      if (tool.state !== states.newGame && tool.state !== states.playing) {
         newGame();
         return;
       }
       var cell = Number($event.srcElement.getAttribute('n'));
       var action = document.getElementById('markAction');
-      if(action.checked){
+      if (action.checked) {
         mark($event.srcElement);
       } else {
         open(cell);
       }
     }
-    var mark = function(elem) {
-      if(elem.className === classNames.flag){
+    
+    var mark = function (elem) {
+      if (elem.className === classNames.flag) {
         elem.className = classNames.nosure;
-      } else if(elem.className === classNames.nosure) {
+        tool.mine++;
+      } else if (elem.className === classNames.nosure) {
         elem.className = classNames.normal;
       } else {
         elem.className = classNames.flag;
+        tool.mine--;
       }
     }
+    
     var open = function (cell) {
       console.debug('open:' + cell);
       var elem = document.getElementById('td' + cell);
-      if(!elem) return;
+      if (!elem) return;
       if (elem.className === classNames.normal) {
         checkStart(cell);
         options.opens.push(cell);
         var count = getMineCount(cell);
-        if(count < 0){
+        if (count < 0) {
           gameOver(cell);
           return;
-        } else if (count === 0){
+        } else if (count === 0) {
           elem.className = classNames.number;
           var around = getAroundCells(cell);
           for (let i = 0; i < around.length; i++) {
             open(around[i]);
-            if(options.state !== states.playing) return;
+            if (tool.state !== states.playing) return;
           }
         } else if (!!count) {
           elem.className = classNames.number + " d" + count;
@@ -239,64 +331,64 @@
         checkWin();
       }
     }
-    var checkStart = function(startPoint) {
-      if(options.state === states.newGame){
+    var checkStart = function (startPoint) {
+      if (tool.state === states.newGame) {
         setMines(startPoint);
       }
     }
-    var checkWin = function() {
-      if(options.state !== states.playing) return false;
-      if(options.opens.length + settings.mCount === options.cells.length) {
-        setState(states.win);
+    var checkWin = function () {
+      if (tool.state !== states.playing) return false;
+      if (options.opens.length + settings.mCount === options.cells.length) {
+        tool.state = states.win;
         return true;
       }
       return false;
     }
-    var getMineCount = function(cell){
-      if(options.mines.indexOf(cell) >=0) return -1;
+    var getMineCount = function (cell) {
+      if (options.mines.indexOf(cell) >= 0) return -1;
 
       var count = 0;
       var around = getAroundCells(cell);
       for (let i = 0; i < around.length; i++) {
-        if(options.mines.indexOf(around[i]) >= 0) count++;
+        if (options.mines.indexOf(around[i]) >= 0) count++;
       }
       return count;
     }
-    var getAroundCells = function(cell){
+    var getAroundCells = function (cell) {
       var around = [];
       var row = cell / settings.hCount;
       var col = cell % settings.hCount;
-      if(row > 1){
+      if (row > 1) {
         around.push(cell - settings.hCount);
-        if(col > 1)
+        if (col > 1)
           around.push(cell - settings.hCount - 1);
-        if(col < settings.hCount)
+        if (col < settings.hCount)
           around.push(cell - settings.hCount + 1);
       }
-      if(col > 1)
+      if (col > 1)
         around.push(cell - 1);
-      if(col < settings.hCount)
+      if (col < settings.hCount)
         around.push(cell + 1);
-      if(row < settings.vCount) {
+      if (row < settings.vCount) {
         around.push(cell + settings.hCount);
-        if(col > 1)
+        if (col > 1)
           around.push(cell + settings.hCount - 1);
-        if(col < settings.hCount)
+        if (col < settings.hCount)
           around.push(cell + settings.hCount + 1);
       }
       return around;
     }
-    var gameOver = function(cell) {
-      setState(states.loading);
+    var gameOver = function (cell) {
+      tool.state = states.loading;
 
       for (let i = 0; i < options.mines.length; i++) {
         var index = options.mines[i];
         var elem = document.getElementById('td' + index);
         elem.className = classNames.mine;
-        if(index === cell) elem.className += " " + classNames.boom;
+        if (index === cell) elem.className += " " + classNames.boom;
       }
 
-      setState(states.fail);
+      tool.state = states.fail;
     }
 
     var randomInt = function (min, max) {
@@ -313,7 +405,22 @@
       }
     }
 
-    document.onload = newGame();
+    var init = function() {
+      var openBtn = document.getElementById('openBtn');
+      openBtn.onclick = function() {
+        cellClick(layer.cellEvent);
+        document.getElementById('layer').hidden = true;
+        layer.cellEvent = null;
+      };
+      var markBtn = document.getElementById('markBtn');
+      markBtn.onclick = function() {
+        mark(layer.cellEvent.srcElement);
+        document.getElementById('layer').hidden = true;
+        layer.cellEvent = null;
+      }
+      newGame();
+    }
+    document.onload = init();
   </script>
 </body>
 
