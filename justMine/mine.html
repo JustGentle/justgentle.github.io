@@ -179,6 +179,7 @@
         })
       }
     }
+    
     var layer = {
       cellEvent: null
     }
@@ -246,7 +247,7 @@
           td.style.height = options.mineSize + "px";
           td.className = classNames.normal;
           td.setAttribute('n', cellIndex);
-          td.click = cellClick;
+          td.onclick = cellClick;
           td.longClick(cellHold);
           tr.appendChild(td);
           options.cells.push(cellIndex);
@@ -300,7 +301,7 @@
         tool.mine++;
       } else if (elem.className === classNames.nosure) {
         elem.className = classNames.normal;
-      } else {
+      } else if (elem.className === classNames.normal) {
         elem.className = classNames.flag;
         tool.mine--;
       }
