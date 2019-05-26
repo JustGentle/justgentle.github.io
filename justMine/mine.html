@@ -8,6 +8,10 @@
       width: 100%;
       height: 50px;
     }
+    #state {
+      font-weight: bold;
+      color: red;
+    }
     table {
       border-spacing: 0;
     }
@@ -99,6 +103,7 @@
     <div id="tool">
       <input type="radio" name="action" id="openAction" value="open" checked/>翻开
       <input type="radio" name="action" id="markAction" value="mark"/>标记
+      <span id="state"></span>
     </div>
     <div id="game"></div>
   </div>
@@ -113,18 +118,19 @@
       nosure: 'mark nosure'
     };
     var states = {
-      loading: 'loading',
-      newGame: 'NewGame',
-      playing: 'Playing',
-      win: 'Win',
-      fail: 'Fail'
+      loading: '加载中...',
+      newGame: '新游戏',
+      playing: '游戏中',
+      win: '胜利！',
+      fail: '失败！'
     }
     var options = {
       mineSize: 30,
       cells: [],
       mines: [],
       state: states.loading,
-      opens: []
+      opens: [],
+      stateElem: null
     };
     var settings = {
       hCount: 9,
@@ -133,18 +139,13 @@
     };
 
     var setState = function(state) {
-      switch (state) {
-        case states.loading:
-          
-          break;
-      
-        default:
-          break;
-      }
+      options.state = state;
+      options.stateElem.innerText = state;
     }
 
     var newGame = function () {
-      options.state = states.loading;
+      options.stateElem = document.getElementById('state');
+      setState(states.loading);
       options.mines = [];
       options.cells = [];
       options.opens = [];
@@ -171,12 +172,12 @@
       game.innerHTML = "";
       game.appendChild(table);
 
-      options.state = states.newGame;
+      setState(states.newGame);
     }
 
     var setMines = function (startPoint) {
       console.debug('setMines:' + startPoint);
-      options.state = states.loading;
+      setState(states.loading);
 
       options.mines = [];
       var cells = options.cells.concat();
@@ -188,7 +189,7 @@
           options.mines.push(cell);
       }
 
-      options.state = states.playing;
+      setState(states.playing);
     }
 
     var leftClick = function($event){
@@ -246,7 +247,7 @@
     var checkWin = function() {
       if(options.state !== states.playing) return false;
       if(options.opens.length + settings.mCount === options.cells.length) {
-        options.state = states.win;
+        setState(states.win);
         return true;
       }
       return false;
@@ -286,7 +287,7 @@
       return around;
     }
     var gameOver = function(cell) {
-      options.state = states.loading;
+      setState(states.loading);
 
       for (let i = 0; i < options.mines.length; i++) {
         var index = options.mines[i];
@@ -295,7 +296,7 @@
         if(index === cell) elem.className += " " + classNames.boom;
       }
 
-      options.state = states.fail;
+      setState(states.fail);
     }
 
     var randomInt = function (min, max) {
