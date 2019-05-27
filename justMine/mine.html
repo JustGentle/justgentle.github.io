@@ -22,14 +22,15 @@
       /* Non-prefixed version, currently not supported by any browser */
     }
 
-    #parent button {
+    #parent .btn {
+      cursor: pointer;
       border: 1px solid gray;
       background: white;
       color: black;
       padding: 5px;
     }
 
-    #parent button:hover {
+    #parent .btn:hover {
       border: 1px solid lightcyan;
       background: lightgray;
       color: blue;
@@ -62,7 +63,7 @@
       color: cyan;
     }
 
-    #layer button {
+    #layer .btn {
       margin-top: 10px;
     }
 
@@ -183,7 +184,7 @@
           <td colspan="3">
             <input type="radio" name="action" id="openAction" value="open" checked />翻开
             <input type="radio" name="action" id="markAction" value="mark" />标记
-            <button id="pauseBtn">暂停</button>
+            <button class="btn" id="pauseBtn">暂停</button>
           </td>
         </tr>
         <tr>
@@ -196,22 +197,22 @@
     <div id="game"></div>
     <div id="layer" hidden>
       <div id="action" class="layerCenter" hidden>
-        <button name="backBtn">返回</button><br />
-        <button id="openBtn">翻开</button><br />
-        <button id="openAroundBtn">翻开周围</button><br />
-        <button id="markBtn">标记</button>
+        <button class="btn" name="backBtn">返回</button>
+        <button class="btn" id="openBtn">翻开</button>
+        <button class="btn" id="openAroundBtn">翻开周围</button>
+        <button class="btn" id="markBtn">标记</button>
       </div>
       <div id="stop" class="layerCenter" hidden>
         <span id="stopState">结束</span><br />
-        <button name="backBtn">返回</button><br />
-        <button name="newGameBtn">新游戏</button><br />
-        <button name="restartBtn">重新开始(地雷不变)</button>
+        <button class="btn" name="backBtn">返回</button>
+        <button class="btn" name="newGameBtn">新游戏</button>
+        <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
       </div>
       <div id="pause" class="layerCenter" hidden>
         <span id="pauseState">暂停</span><br />
-        <button name="backBtn">返回</button><br />
-        <button name="newGameBtn">新游戏</button><br />
-        <button name="restartBtn">重新开始(地雷不变)</button>
+        <button class="btn" name="backBtn">返回</button>
+        <button class="btn" name="newGameBtn">新游戏</button>
+        <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
       </div>
     </div>
   </div>
@@ -315,7 +316,7 @@
           cellClick({ cell: elems.layerCell, mark: false });
           elems.layerCell = null;
         };
-        elems.openAroundBtn.onclick = function(){
+        elems.openAroundBtn.onclick = function () {
           elems.layer.hidden = true;
           openAround(elems.layerCell);
           elems.layerCell = null;
@@ -578,7 +579,7 @@
         case classNames.flag:
           elem.className = classNames.nosure;
           var i = options.flags.indexOf(cell);
-          if(i >=0 ) options.flags.splice(i, 1);
+          if (i >= 0) options.flags.splice(i, 1);
           tools.mine++;
           break;
         case classNames.nosure:
@@ -629,7 +630,7 @@
       if (elem.className !== classNames.normal) return false;
       return elem;
     }
-    
+
     var openAround = function (cell) {
       var around = canOpenAround(cell);
       if (!around) return;
