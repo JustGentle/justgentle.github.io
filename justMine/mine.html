@@ -3,7 +3,7 @@
 
 <head>
   <title>Just扫雷</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, user-scalable=yes"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, user-scalable=yes" />
   <style>
     #parent {
       position: relative;
@@ -66,6 +66,17 @@
 
     #layer .btn {
       margin-top: 10px;
+    }
+
+    #layer ul {
+      list-style: none;
+      padding-inline-start: 0;
+      color: skyblue;
+      margin: 10px;
+    }
+
+    #layer input {
+      margin-left: 5px;
     }
 
     #tools {
@@ -183,8 +194,8 @@
       <table style="width:100%">
         <tr>
           <td colspan="3">
-            <input type="radio" name="action" id="openAction" value="open" checked />翻开
-            <input type="radio" name="action" id="markAction" value="mark" />标记
+            <input type="radio" name="action" id="openAction" value="open" checked /><label for="openAction">翻开</label>
+            <input type="radio" name="action" id="markAction" value="mark" /><label for="markAction">标记</label>
             <button class="btn" id="pauseBtn">暂停</button>
           </td>
         </tr>
@@ -206,14 +217,23 @@
       <div id="stop" class="layerCenter" hidden>
         <span id="stopState">结束</span><br />
         <button class="btn" name="backBtn">返回</button>
-        <button class="btn" name="newGameBtn">新游戏</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
+        <button class="btn" name="newGameBtn">新游戏</button>
       </div>
       <div id="pause" class="layerCenter" hidden>
         <span id="pauseState">暂停</span><br />
         <button class="btn" name="backBtn">返回</button>
-        <button class="btn" name="newGameBtn">新游戏</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
+        <button class="btn" name="newGameBtn">新游戏</button>
+        <ul>
+          <li><input type="radio" name="level" id="lvEasy"><label for="lvEasy">初级</label></li>
+          <li><input type="radio" name="level" id="lvNormal"><label for="lvNormal">中级</label></li>
+          <li><input type="radio" name="level" id="lvHard"><label for="lvHard">高级</label></li>
+          <li><input type="radio" name="level" id="lvCustom"><label for="lvCustom">自定义</label></li>
+          <li><label for="hCount">宽</label><input type="number" id="hCount"></li>
+          <li><label for="vCount">高</label><input type="number" id="vCount"></li>
+          <li><label for="mCount">雷</label><input type="number" id="mCount"></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -256,28 +276,36 @@
       fail: '失败！'
     }
     var elems = {
+      game: null,
+
       markAction: null,
       pauseBtn: null,
 
       mine: null,
       state: null,
       time: null,
-
       timer: null,
 
       layer: null,
+      layerCell: null,
+
       layerAction: null,
       openBtn: null,
       openAroundBtn: null,
       markBtn: null,
+
       layerStop: null,
       stopState: null,
       layerPause: null,
       pauseState: null,
 
-      layerCell: null,
-
-      game: null,
+      lvEasy: null,
+      lvNormal: null,
+      lvHard: null,
+      lvCustom: null,
+      hCount: null,
+      vCount: null,
+      mCount: null,
 
       cell2elem: function (cell) {
         return document.getElementById('td' + cell);
@@ -291,6 +319,8 @@
         return new RegExp('\\b' + className + '\\b').test(elem.className);
       },
       init: function () {
+        this.game = document.getElementById('game');
+
         this.markAction = document.getElementById('markAction');
         this.pauseBtn = document.getElementById('pauseBtn');
         this.pauseBtn.onclick = gamePause;
@@ -300,16 +330,24 @@
         this.time = document.getElementById('time');
 
         this.layer = document.getElementById('layer');
+
         this.layerAction = document.getElementById('action');
         this.openBtn = document.getElementById('openBtn');
         this.openAroundBtn = document.getElementById('openAroundBtn');
         this.markBtn = document.getElementById('markBtn');
+
         this.layerStop = document.getElementById('stop');
         this.stopState = document.getElementById('stopState');
         this.layerPause = document.getElementById('pause');
         this.pauseState = document.getElementById('pauseState');
 
-        this.game = document.getElementById('game');
+        this.lvEasy = document.getElementById('lvEasy');
+        this.lvNormal = document.getElementById('lvNormal');
+        this.lvHard = document.getElementById('lvHard');
+        this.lvCustom = document.getElementById('lvCustom');
+        this.hCount = document.getElementById('hCount');
+        this.vCount = document.getElementById('vCount');
+        this.mCount = document.getElementById('mCount');
 
         //layer事件
         elems.openBtn.onclick = function () {
@@ -334,6 +372,27 @@
         }
 
         var layerNewGame = function () {
+          var valid = true;
+          if (isNaN(elems.hCount.valueAsNumber)) {
+            elems.hCount.style.borderColor = 'red';
+            valid = false;
+          } else {
+            elems.hCount.style.borderColor = 'unset';
+          }
+          if (isNaN(elems.vCount.valueAsNumber)) {
+            elems.vCount.style.borderColor = 'red';
+            valid = false;
+          } else {
+            elems.vCount.style.borderColor = 'unset';
+          }
+          if (isNaN(elems.mCount.valueAsNumber)) {
+            elems.mCount.style.borderColor = 'red';
+            valid = false;
+          } else {
+            elems.mCount.style.borderColor = 'unset';
+          }
+          if (!valid) return;
+          setGame(elems.hCount.valueAsNumber, elems.vCount.valueAsNumber, elems.mCount.valueAsNumber);
           newGame();
           gameBack();
         };
@@ -349,6 +408,28 @@
         var restartBtns = document.getElementsByName('restartBtn');
         for (let i = 0; i < restartBtns.length; i++) {
           restartBtns[i].onclick = layerRestart;
+        }
+
+        this.lvEasy.onclick = function () {
+          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+          elems.hCount.value = 9;
+          elems.vCount.value = 9;
+          elems.mCount.value = 10;
+        }
+        this.lvNormal.onclick = function () {
+          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+          elems.hCount.value = 16;
+          elems.vCount.value = 16;
+          elems.mCount.value = 40;
+        }
+        this.lvHard.onclick = function () {
+          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+          elems.hCount.value = 30;
+          elems.vCount.value = 16;
+          elems.mCount.value = 99;
+        }
+        this.lvCustom.onclick = function () {
+          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = false;
         }
       }
     }
@@ -409,6 +490,19 @@
       }
     }
 
+    var setGame = function (hCount, vCount, mCount, lvName) {
+      if (hCount > 99) hCount = 99;
+      if (vCount > 99) vCount = 99;
+      var maxMine = hCount * vCount - 1;
+      if (mCount > maxMine) mCount = maxMine;
+
+      settings.hCount = hCount;
+      settings.vCount = vCount;
+      settings.mCount = mCount;
+      elems.hCount.value = hCount;
+      elems.vCount.value = vCount;
+      elems.mCount.value = mCount;
+    }
     var newGame = function (restart) {
       tools.state = states.loading;
 
@@ -700,7 +794,7 @@
     var getAroundCells = function (cell) {
       var around = [];
       var row = cell / settings.hCount;
-      var col = cell % settings.hCount;
+      var col = cell % settings.hCount || settings.hCount;
       if (row > 1) {
         around.push(cell - settings.hCount);
         if (col > 1)
