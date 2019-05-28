@@ -197,6 +197,7 @@
             <input type="radio" name="action" id="openAction" value="open" checked /><label for="openAction">翻开</label>
             <input type="radio" name="action" id="markAction" value="mark" /><label for="markAction">标记</label>
             <button class="btn" id="pauseBtn">暂停</button>
+            <button class="btn" id="levelBtn">难度</button>
           </td>
         </tr>
         <tr>
@@ -225,6 +226,11 @@
         <button class="btn" name="backBtn">返回</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
         <button class="btn" name="newGameBtn">新游戏</button>
+      </div>
+      <div id="level" class="layerCenter" hidden>
+        <span id="levelState">难度</span><br />
+        <button class="btn" name="backBtn">返回</button>
+        <button class="btn" name="newGameBtn">确定</button>
         <ul>
           <li><input type="radio" name="level" id="lvEasy"><label for="lvEasy">初级</label></li>
           <li><input type="radio" name="level" id="lvNormal"><label for="lvNormal">中级</label></li>
@@ -236,6 +242,10 @@
         </ul>
       </div>
     </div>
+    <ul>
+      <li>长按可显示操作</li>
+      <li>Ctrl可快速标记或翻开周围</li>
+    </ul>
   </div>
   <script type="text/javascript">
     Object.prototype.longClick = function (callback, time) {
@@ -270,6 +280,7 @@
     var states = {
       loading: '加载中...',
       newGame: '新游戏',
+      level: '难度',
       playing: '游戏中',
       pause: '暂停',
       win: '胜利！',
@@ -280,6 +291,7 @@
 
       markAction: null,
       pauseBtn: null,
+      levelBtn: null,
 
       mine: null,
       state: null,
@@ -298,6 +310,8 @@
       stopState: null,
       layerPause: null,
       pauseState: null,
+      layerLevel: null,
+      levelState: null,
 
       lvEasy: null,
       lvNormal: null,
@@ -324,6 +338,8 @@
         this.markAction = document.getElementById('markAction');
         this.pauseBtn = document.getElementById('pauseBtn');
         this.pauseBtn.onclick = gamePause;
+        this.levelBtn = document.getElementById('levelBtn');
+        this.levelBtn.onclick = gameLevel;
 
         this.mine = document.getElementById('mine');
         this.state = document.getElementById('state');
@@ -340,6 +356,8 @@
         this.stopState = document.getElementById('stopState');
         this.layerPause = document.getElementById('pause');
         this.pauseState = document.getElementById('pauseState');
+        this.layerLevel = document.getElementById('level');
+        this.levelState = document.getElementById('levelState');
 
         this.lvEasy = document.getElementById('lvEasy');
         this.lvNormal = document.getElementById('lvNormal');
@@ -392,7 +410,7 @@
             elems.mCount.style.borderColor = 'unset';
           }
           if (!valid) return;
-          setGame(elems.hCount.valueAsNumber, elems.vCount.valueAsNumber, elems.mCount.valueAsNumber);
+          setGame(false, elems.hCount.valueAsNumber, elems.vCount.valueAsNumber, elems.mCount.valueAsNumber);
           newGame();
           gameBack();
         };
@@ -490,7 +508,15 @@
       }
     }
 
-    var setGame = function (hCount, vCount, mCount, lvName) {
+    var setGame = function (lvName, hCount, vCount, mCount) {
+      if(lvName && elems[lvName]) {
+        elems[lvName].checked = true;
+        elems[lvName].onclick();
+        hCount = elems.hCount.valueAsNumber;
+        vCount = elems.vCount.valueAsNumber;
+        mCount = elems.mCount.valueAsNumber;
+      }
+
       if (hCount > 99) hCount = 99;
       if (vCount > 99) vCount = 99;
       var maxMine = hCount * vCount - 1;
@@ -499,6 +525,7 @@
       settings.hCount = hCount;
       settings.vCount = vCount;
       settings.mCount = mCount;
+
       elems.hCount.value = hCount;
       elems.vCount.value = vCount;
       elems.mCount.value = mCount;
@@ -602,6 +629,12 @@
       tools.calcGameTime();
       showLayer();
     }
+    var gameLevel = function(){
+      tools.backState = tools.state;
+      tools.state = states.level;
+      tools.calcGameTime();
+      showLayer();
+    }
     var gameBack = function () {
       elems.layer.hidden = true;
       elems.layerCell = null;
@@ -622,7 +655,17 @@
       var cell = $event.cell || elems.elem2cell($event.srcElement);
       checkStart(cell);
 
-      var checked = typeof $event.mark === 'undefined' ? elems.markAction.checked : $event.mark;
+      if($event.ctrlKey){
+        if(canMark(cell))
+          mark(cell);
+        else
+          openAround(cell);
+        return;
+      }
+
+      var checked = typeof $event.mark === 'undefined' 
+                    ? elems.markAction.checked
+                    : $event.mark;
       if (checked) {
         mark(cell);
       } else {
@@ -638,20 +681,27 @@
           //结束
           elems.layer.className = "";
           elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
-          elems.layerAction.hidden = elems.layerPause.hidden = true;
+          elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
           break;
         case states.pause:
           //暂停
           elems.layer.className = classNames.pause;
           elems.pauseState.innerText = '【' + tools.state + '】';
-          elems.layerAction.hidden = elems.layerStop.hidden = true;
+          elems.layerAction.hidden = elems.layerStop.hidden = elems.layerLevel.hidden = true;
           elems.layerPause.hidden = false;
+          break;
+        case states.level:
+          //难度
+          elems.layer.className = classNames.pause;
+          elems.levelState.innerText = '【' + tools.state + '】';
+          elems.layerAction.hidden = elems.layerStop.hidden = elems.layerPause.hidden = true;
+          elems.layerLevel.hidden = false;
           break;
         case states.playing:
           //操作
           elems.layer.className = "";
-          elems.layerPause.hidden = elems.layerStop.hidden = true;
+          elems.layerPause.hidden = elems.layerStop.hidden = elems.layerLevel.hidden = true;
           var elem = canOpen(elems.layerCell);
           elems.openBtn.hidden = !elem;
           elem = canOpenAround(elems.layerCell);
@@ -832,6 +882,7 @@
 
     var init = function () {
       elems.init();
+      setGame('lvNormal');
       newGame();
     }
     document.onload = init();
