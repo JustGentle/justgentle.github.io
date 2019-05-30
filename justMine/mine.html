@@ -225,7 +225,10 @@
         <span id="pauseState">暂停</span><br />
         <button class="btn" name="backBtn">返回</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
-        <button class="btn" name="newGameBtn">新游戏</button>
+        <button class="btn" name="newGameBtn">新游戏</button><br />
+        <button class="btn" id="saveGameBtn">保存</button>
+        <button class="btn" id="loadGameBtn">读取</button>
+        <span id="saveState"></span>
       </div>
       <div id="level" class="layerCenter" hidden>
         <span id="levelState">难度</span><br />
@@ -267,6 +270,9 @@
       }
     }
 
+    var cookies = {
+      save: 'save'
+    }
     var classNames = {
       normal: 'normal',
       number: 'number',
@@ -306,13 +312,14 @@
       openAroundBtn: null,
       markBtn: null,
 
-      layerStop: null,
-      stopState: null,
       layerPause: null,
       pauseState: null,
+      saveGameBtn: null,
+      loadGameBtn: null,
+      saveState: null,
+
       layerLevel: null,
       levelState: null,
-
       lvEasy: null,
       lvNormal: null,
       lvHard: null,
@@ -320,6 +327,9 @@
       hCount: null,
       vCount: null,
       mCount: null,
+
+      layerStop: null,
+      stopState: null,
 
       cell2elem: function (cell) {
         return document.getElementById('td' + cell);
@@ -332,14 +342,18 @@
         className = className || classNames.number;
         return new RegExp('\\b' + className + '\\b').test(elem.className);
       },
+      lvName: function () {
+        if (elems.lvEasy.checked) return elems.lvEasy.id;
+        if (elems.lvNormal.checked) return elems.lvNormal.id;
+        if (elems.lvHard.checked) return elems.lvHard.id;
+        return elems.lvCustom.id;
+      },
       init: function () {
         this.game = document.getElementById('game');
 
         this.markAction = document.getElementById('markAction');
         this.pauseBtn = document.getElementById('pauseBtn');
-        this.pauseBtn.onclick = gamePause;
         this.levelBtn = document.getElementById('levelBtn');
-        this.levelBtn.onclick = gameLevel;
 
         this.mine = document.getElementById('mine');
         this.state = document.getElementById('state');
@@ -352,13 +366,14 @@
         this.openAroundBtn = document.getElementById('openAroundBtn');
         this.markBtn = document.getElementById('markBtn');
 
-        this.layerStop = document.getElementById('stop');
-        this.stopState = document.getElementById('stopState');
         this.layerPause = document.getElementById('pause');
         this.pauseState = document.getElementById('pauseState');
+        this.saveGameBtn = document.getElementById('saveGameBtn');
+        this.loadGameBtn = document.getElementById('loadGameBtn');
+        this.saveState = document.getElementById('saveState');
+
         this.layerLevel = document.getElementById('level');
         this.levelState = document.getElementById('levelState');
-
         this.lvEasy = document.getElementById('lvEasy');
         this.lvNormal = document.getElementById('lvNormal');
         this.lvHard = document.getElementById('lvHard');
@@ -367,7 +382,13 @@
         this.vCount = document.getElementById('vCount');
         this.mCount = document.getElementById('mCount');
 
-        //layer事件
+        this.layerStop = document.getElementById('stop');
+        this.stopState = document.getElementById('stopState');
+
+        //事件
+        elems.pauseBtn.onclick = gamePause;
+        elems.levelBtn.onclick = gameLevel;
+
         elems.openBtn.onclick = function () {
           elems.layer.hidden = true;
           cellClick({ cell: elems.layerCell, mark: false });
@@ -383,6 +404,9 @@
           cellClick({ cell: elems.layerCell, mark: true });
           elems.layerCell = null;
         };
+
+        elems.saveGameBtn.onclick = saveGame;
+        elems.loadGameBtn.onclick = loadGame;
 
         var backBtns = document.getElementsByName('backBtn');
         for (let i = 0; i < backBtns.length; i++) {
@@ -509,7 +533,7 @@
     }
 
     var setGame = function (lvName, hCount, vCount, mCount) {
-      if(lvName && elems[lvName]) {
+      if (lvName && elems[lvName]) {
         elems[lvName].checked = true;
         elems[lvName].onclick();
         hCount = elems.hCount.valueAsNumber;
@@ -629,7 +653,7 @@
       tools.calcGameTime();
       showLayer();
     }
-    var gameLevel = function(){
+    var gameLevel = function () {
       tools.backState = tools.state;
       tools.state = states.level;
       tools.calcGameTime();
@@ -645,6 +669,78 @@
       tools.calcGameTime();
     }
 
+    var saveGame = function () {
+      if (!canSave()) return false;
+
+      try {
+        elems.saveState.innerText = "保存中...";
+        tools.calcGameTime();
+        var save = {};
+        save.mines = options.mines;
+        save.opens = options.opens;
+        save.flags = options.flags;
+        save.lvName = elems.lvName();
+        save.hCount = settings.hCount;
+        save.vCount = settings.vCount;
+        save.time = settings.time;
+
+        var exp = new Date();
+        exp.setFullYear(exp.getFullYear() + 1);
+        if(!setCookie(cookies.save, JSON.stringify(save), exp)){
+          throw '保存失败!';
+        }
+        elems.saveState.innerText = "保存成功!";
+        elems.loadGameBtn.hidden = !canLoad();
+      } catch (error) {
+        console.error(error);
+        elems.saveState.innerText = "保存失败!";
+        return;
+      }
+    }
+    var canSave = function () {
+      if (!options.mines.length) return false;
+      var state = tools.backState || tools.state;
+      if (state !== states.playing && state !== states.newGame) return false;
+      return true;
+    }
+    var loadGame = function () {
+      var save = canLoad();
+      if (!save) return false;
+      elems.saveState.innerText = "读取中...";
+      gamePause();
+
+      try {
+        save = JSON.parse(save);
+        options.mines = save.mines;
+        options.opens = save.opens;
+        options.flags = save.flags;
+        setGame(save.lvName, save.hCount, save.vCount, save.mines.length);
+        settings.time = save.time;
+
+        tools.backState = options.opens.length ? states.playing : states.newGame;
+        gamePause();
+        elems.saveState.innerText = "读取成功!";
+        return true;
+      } catch (error) {
+        console.error(error);
+        defaultGame();
+        elems.saveState.innerText = "读取失败,游戏已重置!";
+        gamePause();
+      }
+    }
+    var canLoad = function () {
+      var save = getCookie(cookies.save);
+      if (!save) return false;
+      return save;
+    }
+    var clearSave = function () {
+      delCookie(cookies.save);
+    }
+    var defaultGame = function () {
+      setGame('lvNormal');
+      newGame();
+    }
+
     var cellHold = function ($event) {
       elems.layerCell = elems.elem2cell($event.srcElement);
       showLayer();
@@ -655,17 +751,17 @@
       var cell = $event.cell || elems.elem2cell($event.srcElement);
       checkStart(cell);
 
-      if($event.ctrlKey){
-        if(canMark(cell))
+      if ($event.ctrlKey) {
+        if (canMark(cell))
           mark(cell);
         else
           openAround(cell);
         return;
       }
 
-      var checked = typeof $event.mark === 'undefined' 
-                    ? elems.markAction.checked
-                    : $event.mark;
+      var checked = typeof $event.mark === 'undefined'
+        ? elems.markAction.checked
+        : $event.mark;
       if (checked) {
         mark(cell);
       } else {
@@ -689,6 +785,10 @@
           elems.layer.className = classNames.pause;
           elems.pauseState.innerText = '【' + tools.state + '】';
           elems.layerAction.hidden = elems.layerStop.hidden = elems.layerLevel.hidden = true;
+          var save = canSave();
+          elems.saveGameBtn.hidden = !save;
+          var load = canLoad();
+          elems.loadGameBtn.hidden = !load;
           elems.layerPause.hidden = false;
           break;
         case states.level:
@@ -879,14 +979,36 @@
           break;
       }
     }
+    var setCookie = function (name, value, expires) {
+      var cookie = name + '=' + escape(value) + '; expires=' + expires.toGMTString();
+      document.cookie = cookie;
+      return getCookie(name) === value;
+    }
+    var getCookie = function (name) {
+      var arr = document.cookie.match(new RegExp("(^| )" + name + "=([^;]*)(;|$)"));
+      if (arr != null) return unescape(arr[2]);
+      return null;
+    }
+    var delCookie = function (name) {
+      var exp = new Date();
+      exp.setTime(exp.getTime() - 1);
+      var cval = getCookie(name);
+      if (cval != null) document.cookie = name + "=" + cval + ";expires=" + exp.toGMTString();
+    }
 
     var init = function () {
       elems.init();
-      setGame('lvNormal');
-      newGame();
+      var result = loadGame();
+      if (result === false) {
+        defaultGame();
+      }
     }
     document.onload = init();
+    window.onbeforeunload = window.onblur = saveGame;
   </script>
 </body>
 
 </html>
+
+<!-- TODO:AI扫雷+提示 -->
+<!-- TODO:AI思路记忆+重播 -->
