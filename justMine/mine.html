@@ -689,9 +689,7 @@
         save.vCount = settings.vCount;
         save.time = settings.time;
 
-        var exp = new Date();
-        exp.setFullYear(exp.getFullYear() + 1);
-        if(!setCookie(cookies.save, JSON.stringify(save), exp)){
+        if (!setCookie(cookies.save, JSON.stringify(save))) {
           throw '保存失败!';
         }
         elems.saveState.innerText = "保存成功!";
@@ -718,7 +716,7 @@
         setGame(save.lvName, save.hCount, save.vCount, save.mines.length);
         options.mines = save.mines;
         newGame(true);
-        if(save.opens.length){
+        if (save.opens.length) {
           gameStart(save.opens[0]);
           for (let i = 0; i < save.opens.length; i++) {
             open(save.opens[i]);
@@ -753,11 +751,11 @@
       newGame();
     }
 
-    var hightScore = function(time) {
+    var hightScore = function (time) {
       var score = getCookie(cookies.hightScore);
       score = score && Number(score);
       time = time && Number(time);
-      if(time && (!score || time < score)) setCookie(cookies.hightScore, time);
+      if (time && (!score || time < score)) setCookie(cookies.hightScore, time);
       time = getCookie(cookies.hightScore);
       time = time && Number(time);
       return time;
@@ -800,10 +798,10 @@
           elems.layer.className = "";
           elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
           var time = hightScore();
-          if(time == tools.time){
+          if (time == tools.time) {
             elems.stopState.innerHTML += "<br/>最高纪录!";
           }
-          else {
+          else if (!!time) {
             elems.stopState.innerHTML += "<br/>最高纪录:" + time + '秒';
           }
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
@@ -1009,6 +1007,10 @@
       }
     }
     var setCookie = function (name, value, expires) {
+      if (typeof expires === 'undefined') {
+        var expires = new Date();
+        expires.setFullYear(expires.getFullYear() + 1);
+      }
       var cookie = name + '=' + escape(value) + '; expires=' + expires.toGMTString();
       document.cookie = cookie;
       return getCookie(name) === value;
