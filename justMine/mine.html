@@ -666,6 +666,7 @@
     var gameBack = function () {
       elems.layer.hidden = true;
       elems.layerCell = null;
+      elems.saveState.innerText = '';
       if (tools.backState) {
         tools.state = tools.backState;
         tools.backState = null;
@@ -718,8 +719,11 @@
         setGame(save.lvName, save.hCount, save.vCount, save.mines.length);
         options.mines = save.mines;
         newGame();
-        for (let i = 0; i < save.opens.length; i++) {
-          open(save.opens[i]);
+        if(save.opens.length){
+          gameStart(save.opens[i]);
+          for (let i = 0; i < save.opens.length; i++) {
+            open(save.opens[i]);
+          }
         }
         for (let i = 0; i < save.flags.length; i++) {
           mark(save.flags[i]);
@@ -768,7 +772,6 @@
       if (checkNew()) return;
 
       var cell = $event.cell || elems.elem2cell($event.srcElement);
-      checkStart(cell);
 
       if ($event.ctrlKey) {
         if (canMark(cell))
@@ -784,6 +787,7 @@
       if (checked) {
         mark(cell);
       } else {
+        checkStart(cell);
         open(cell);
       }
     }
