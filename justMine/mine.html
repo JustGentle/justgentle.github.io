@@ -718,7 +718,7 @@
         save = JSON.parse(save);
         setGame(save.lvName, save.hCount, save.vCount, save.mines.length);
         options.mines = save.mines;
-        newGame();
+        newGame(true);
         if(save.opens.length){
           gameStart(save.opens[0]);
           for (let i = 0; i < save.opens.length; i++) {
