@@ -755,7 +755,7 @@
       var score = getCookie(cookies.hightScore);
       score = score && Number(score);
       time = time && Number(time);
-      if (time && (!score || time < score)) setCookie(cookies.hightScore, time);
+      if (time && (!score || (time < score))) setCookie(cookies.hightScore, time);
       time = getCookie(cookies.hightScore);
       time = time && Number(time);
       return time;
@@ -797,12 +797,14 @@
           //结束
           elems.layer.className = "";
           elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
-          var time = hightScore();
-          if (time == tools.time) {
-            elems.stopState.innerHTML += "<br/>最高纪录!";
-          }
-          else if (!!time) {
-            elems.stopState.innerHTML += "<br/>最高纪录:" + time + '秒';
+          if(tools.state === states.win){
+            var time = hightScore();
+            if (time == tools.time) {
+              elems.stopState.innerHTML += "<br/>最高纪录!";
+            }
+            else if (!!time) {
+              elems.stopState.innerHTML += "<br/>最高纪录:" + time + '秒';
+            }
           }
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
@@ -1042,5 +1044,6 @@
 
 </html>
 
+<!-- TODO:单独保存游戏设置 -->
 <!-- TODO:AI扫雷+提示 -->
 <!-- TODO:AI思路记忆+重播 -->
