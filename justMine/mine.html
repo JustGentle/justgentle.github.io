@@ -695,7 +695,6 @@
           throw '保存失败!';
         }
         elems.saveState.innerText = "保存成功!";
-        elems.loadGameBtn.hidden = !canLoad();
       } catch (error) {
         console.error(error);
         elems.saveState.innerText = "保存失败!";
@@ -1034,7 +1033,8 @@
       }
     }
     document.onload = init();
-    window.onbeforeunload = window.onblur = saveGame;
+    window.onbeforeunload = saveGame;
+    window.onblur = gamePause;
   </script>
 </body>
 
