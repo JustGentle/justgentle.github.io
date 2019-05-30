@@ -720,7 +720,7 @@
         options.mines = save.mines;
         newGame();
         if(save.opens.length){
-          gameStart(save.opens[i]);
+          gameStart(save.opens[0]);
           for (let i = 0; i < save.opens.length; i++) {
             open(save.opens[i]);
           }
