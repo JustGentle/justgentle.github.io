@@ -75,6 +75,7 @@
       padding-inline-start: 0;
       color: skyblue;
       margin: 10px;
+      padding: 0;
     }
 
     #layer input {
@@ -222,7 +223,7 @@
       </div>
       <div id="stop" class="layerCenter" hidden>
         <span id="stopState">结束</span><br />
-        <button class="btn" name="clearScoreBtn">清除分数</button>
+        <button class="btn" id="clearScoreBtn">清除分数</button>
         <button class="btn" name="backBtn">返回</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
         <button class="btn" name="newGameBtn">新游戏</button>
@@ -238,8 +239,6 @@
       </div>
       <div id="level" class="layerCenter" hidden>
         <span id="levelState">难度</span><br />
-        <button class="btn" name="backBtn">返回</button>
-        <button class="btn" name="newGameBtn">确定</button>
         <ul>
           <li><input type="radio" name="level" id="lvEasy"><label for="lvEasy">初级</label></li>
           <li><input type="radio" name="level" id="lvNormal"><label for="lvNormal">中级</label></li>
@@ -249,6 +248,8 @@
           <li><label for="vCount">高</label><input type="number" id="vCount"></li>
           <li><label for="mCount">雷</label><input type="number" id="mCount"></li>
         </ul>
+        <button class="btn" name="backBtn">返回</button>
+        <button class="btn" name="newGameBtn">确定</button>
       </div>
     </div>
     <ul>
@@ -546,9 +547,9 @@
       if (lvName && elems[lvName]) {
         elems[lvName].checked = true;
         elems[lvName].onclick();
-        hCount = elems.hCount.valueAsNumber || hCount;
-        vCount = elems.vCount.valueAsNumber || vCount;
-        mCount = elems.mCount.valueAsNumber || mCount;
+        hCount = hCount || elems.hCount.valueAsNumber;
+        vCount = vCount || elems.vCount.valueAsNumber;
+        mCount = mCount || elems.mCount.valueAsNumber;
       }
 
       if (hCount > 99) hCount = 99;
