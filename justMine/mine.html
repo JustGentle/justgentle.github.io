@@ -279,6 +279,7 @@
 
     var cookies = {
       save: 'save',
+      setting: 'setting',
       hightScore: 'hightScore'
     }
     var classNames = {
@@ -684,6 +685,13 @@
     }
 
     var saveGame = function () {
+      var saveSet = {
+        lvName: elems.lvName(),
+        hCount: settings.hCount,
+        vCount: settings.vCount,
+        mCount: settings.mCount
+      };
+      setCookie(cookies.setting, JSON.stringify(saveSet));
       if (!canSave()) return false;
 
       try {
@@ -760,7 +768,15 @@
       delCookie(cookies.save);
     }
     var defaultGame = function () {
-      setGame('lvNormal');
+      var saveSet = getCookie(cookies.setting);
+      
+      try{
+        saveSet = JSON.parse(saveSet);
+      } catch (error) {
+        console.log(error);
+      }
+      saveSet = saveSet || { lvName: 'lvNormal' };
+      setGame(saveSet.lvName, saveSet.hCount, saveSet.vCount, saveSet.mCount);
       newGame();
     }
 
@@ -1056,6 +1072,5 @@
 
 </html>
 
-<!-- TODO:单独保存游戏设置 -->
 <!-- TODO:AI扫雷+提示 -->
 <!-- TODO:AI思路记忆+重播 -->
