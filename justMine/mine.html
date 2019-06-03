@@ -812,15 +812,12 @@
           var scoreText = new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
           elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + scoreText;
           var time = hightScore();
-          if(tools.state === states.win){
-            if (time == tools.thisGameTimed) {
-              elems.stopState.innerHTML += "<br/>最高纪录!";
-            }
-            else if (!!time) {
-              elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
-            }
-          }
           elems.clearScoreBtn.hidden = !time;
+          if(tools.state === states.win && time == tools.thisGameTimed){
+            elems.stopState.innerHTML += "<br/>最高纪录!";
+          } else if (!!time && time < tools.thisGameTimed) {
+            elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
+          }
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
           break;
