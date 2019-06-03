@@ -222,6 +222,7 @@
       </div>
       <div id="stop" class="layerCenter" hidden>
         <span id="stopState">结束</span><br />
+        <button class="btn" name="clearScoreBtn">清除分数</button>
         <button class="btn" name="backBtn">返回</button>
         <button class="btn" name="restartBtn">重新开始(地雷不变)</button>
         <button class="btn" name="newGameBtn">新游戏</button>
@@ -336,6 +337,7 @@
 
       layerStop: null,
       stopState: null,
+      clearScoreBtn: null,
 
       cell2elem: function (cell) {
         return document.getElementById('td' + cell);
@@ -390,6 +392,7 @@
 
         this.layerStop = document.getElementById('stop');
         this.stopState = document.getElementById('stopState');
+        this.clearScoreBtn = document.getElementById('clearScoreBtn');
 
         //事件
         elems.pauseBtn.onclick = gamePause;
@@ -543,9 +546,9 @@
       if (lvName && elems[lvName]) {
         elems[lvName].checked = true;
         elems[lvName].onclick();
-        hCount = elems.hCount.valueAsNumber;
-        vCount = elems.vCount.valueAsNumber;
-        mCount = elems.mCount.valueAsNumber;
+        hCount = elems.hCount.valueAsNumber || hCount;
+        vCount = elems.vCount.valueAsNumber || vCount;
+        mCount = elems.mCount.valueAsNumber || mCount;
       }
 
       if (hCount > 99) hCount = 99;
@@ -651,8 +654,8 @@
       tools.state = states.loading;
       elems.timer && clearInterval(elems.timer);
       tools.calcGameTime();
-      options.wins.push(Number(tools.time));
-      hightScore(tools.time);
+      options.wins.push(Number(tools.thisGameTimed));
+      hightScore(tools.thisGameTimed);
       tools.state = states.win;
       showLayer();
     }
@@ -805,16 +808,18 @@
         case states.fail:
           //结束
           elems.layer.className = "";
-          elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
+          var scoreText = new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
+          elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + scoreText;
+          var time = hightScore();
           if(tools.state === states.win){
-            var time = hightScore();
-            if (time == tools.time) {
+            if (time == tools.thisGameTimed) {
               elems.stopState.innerHTML += "<br/>最高纪录!";
             }
             else if (!!time) {
-              elems.stopState.innerHTML += "<br/>最高纪录:" + time + '秒';
+              elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
             }
           }
+          elems.clearScoreBtn.hidden = !!time;
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
           break;
