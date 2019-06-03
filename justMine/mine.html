@@ -820,7 +820,7 @@
               elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
             }
           }
-          elems.clearScoreBtn.hidden = !!time;
+          elems.clearScoreBtn.hidden = !time;
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
           break;
