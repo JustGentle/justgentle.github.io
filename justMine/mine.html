@@ -832,6 +832,7 @@
           if(tools.state === states.win && time == tools.thisGameTimed){
             elems.stopState.innerHTML += "<br/>最高纪录!";
           } else if (!!time && time < tools.thisGameTimed) {
+            scoreText = new Number(time / 1000).toFixed(2) + '秒';
             elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
           }
           elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
