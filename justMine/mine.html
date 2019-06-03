@@ -399,6 +399,7 @@
         //事件
         elems.pauseBtn.onclick = gamePause;
         elems.levelBtn.onclick = gameLevel;
+        elems.clearScoreBtn.onclick = clearHightScore;
 
         elems.openBtn.onclick = function () {
           elems.layer.hidden = true;
@@ -788,6 +789,10 @@
       time = getCookie(cookies.hightScore);
       time = time && Number(time);
       return time;
+    }
+    var clearHightScore = function () {
+      delCookie(cookies.hightScore);
+      showLayer();//重置显示
     }
 
     var cellHold = function ($event) {
