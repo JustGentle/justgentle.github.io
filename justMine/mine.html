@@ -705,7 +705,7 @@
         save.lvName = elems.lvName();
         save.hCount = settings.hCount;
         save.vCount = settings.vCount;
-        save.time = settings.time;
+        save.thisGameTimed = tools.thisGameTimed;
 
         if (!setCookie(cookies.save, JSON.stringify(save))) {
           throw '保存失败!';
@@ -743,7 +743,7 @@
         for (let i = 0; i < save.flags.length; i++) {
           mark(save.flags[i]);
         }
-        settings.time = save.time;
+        tools.thisGameTimed = save.thisGameTimed || 0;
 
         if(!options.cells || !options.cells.length){
           throw '读取错误!';
