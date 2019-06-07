@@ -849,11 +849,15 @@
       return true;
     }
     var loadGame = function () {
+      loadSettings();
       var save = canLoad();
       if (!save) return false;
       elems.saveState.innerText = "读取中...";
       gamePause();
 
+      //先静音
+      var muted = settings.muted;
+      settings.muted = true;
       try {
         save = JSON.parse(save);
         setGame(save.lvName, save.hCount, save.vCount, save.mines.length);
@@ -884,6 +888,8 @@
         elems.saveState.innerText = "读取失败,游戏已重置!";
         gamePause();
       }
+      //还原
+      settings.muted = muted;
     }
     var canLoad = function () {
       var save = getCookie(cookies.save);
@@ -1226,7 +1232,7 @@
     }
     document.onload = init();
     window.onbeforeunload = saveGame;
-    //window.onblur = gamePause;
+    window.onblur = gamePause;
   </script>
 </body>
 
