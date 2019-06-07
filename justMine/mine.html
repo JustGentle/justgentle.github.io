@@ -190,6 +190,14 @@
 
 <body>
   <div id="parent">
+    <div>
+      <audio id="bg" src="audio/bg.mp3" loop></audio>
+      <audio id="mark" src="audio/mark.mp3"></audio>
+      <audio id="open" src="audio/open.mp3"></audio>
+      <audio id="good" src="audio/good.mp3"></audio>
+      <audio id="win" src="audio/win.mp3"></audio>
+      <audio id="fail" src="audio/fail.mp3"></audio>
+    </div>
     <div id="tools">
       <table style="width:100%">
         <tr>
@@ -332,6 +340,15 @@
       layerStop: null,
       stopState: null,
 
+      audio: {
+        bg: null,
+        mark: null,
+        open: null,
+        good: null,
+        win: null,
+        fail: null
+      },
+
       cell2elem: function (cell) {
         return document.getElementById('td' + cell);
       },
@@ -385,6 +402,13 @@
 
         this.layerStop = document.getElementById('stop');
         this.stopState = document.getElementById('stopState');
+
+        this.audio.bg = document.getElementById('bg');
+        this.audio.mark = document.getElementById('mark');
+        this.audio.open = document.getElementById('open');
+        this.audio.good = document.getElementById('good');
+        this.audio.win = document.getElementById('win');
+        this.audio.fail = document.getElementById('fail');
 
         //事件
         elems.pauseBtn.onclick = gamePause;
@@ -474,6 +498,34 @@
         this.lvCustom.onclick = function () {
           elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = false;
         }
+
+        this.audio.win.onplay = this.audio.fail.onplay = () => {
+          this.audio.bg.volume = 0;
+        };
+        this.audio.win.onended = this.audio.fail.onended = () => {
+          this.audio.bg.volume = settings.musicVolume;
+        };
+        this.music = function () {
+          elems.audio.bg.muted = settings.muted;
+          elems.audio.bg.volume = settings.musicVolume;
+          if (!settings.muted && settings.musicVolume > 0) {
+            elems.audio.bg.play();
+            document.onclick = null;
+          } else if (elems.audio.play) {
+            elems.audio.bg.pause();
+          }
+        }
+        this.sound = function (elem) {
+          elem.muted = settings.muted;
+          elem.volume = settings.soundVolume;
+          if (!settings.muted && settings.soundVolume > 0) {
+            elem.play();
+          } else {
+            elem.pause();
+          }
+        }
+        //无法自动播放音乐,第一次点击时播放
+        document.onclick = this.music;
       }
     }
 
@@ -504,7 +556,11 @@
     var settings = {
       hCount: 9,
       vCount: 9,
-      mCount: 10
+      mCount: 10,
+
+      muted: false,
+      musicVolume: 0.5,
+      soundVolume: 1
     };
     var tools = {
       _mine: 0,
@@ -626,6 +682,7 @@
     var gameOver = function (cell) {
       tools.state = states.loading;
 
+      elems.sound(elems.audio.fail);
       elems.timer && clearInterval(elems.timer);
       tools.calcGameTime();
       options.fails.push(Number(tools.time));
@@ -644,6 +701,7 @@
     }
     var gameWin = function (cell) {
       tools.state = states.loading;
+      elems.sound(elems.audio.win);
       elems.timer && clearInterval(elems.timer);
       tools.calcGameTime();
       options.wins.push(Number(tools.time));
@@ -797,7 +855,7 @@
           //结束
           elems.layer.className = "";
           elems.stopState.innerHTML = '【' + tools.state + '】<br/>' + new Number(tools.thisGameTimed / 1000).toFixed(2) + '秒';
-          if(tools.state === states.win){
+          if (tools.state === states.win) {
             var time = hightScore();
             if (time == tools.time) {
               elems.stopState.innerHTML += "<br/>最高纪录!";
@@ -849,6 +907,7 @@
     var mark = function (cell) {
       var elem = canMark(cell);
       if (!elem) return;
+      elems.sound(elems.audio.mark);
       switch (elem.className) {
         case classNames.flag:
           elem.className = classNames.nosure;
@@ -885,6 +944,7 @@
         gameOver(cell);
         return;
       } else if (count === 0) {
+        elems.sound(elems.audio.good);
         elem.className = classNames.number;
         var around = getAroundCells(cell);
         for (let i = 0; i < around.length; i++) {
@@ -892,6 +952,7 @@
           if (tools.state !== states.playing) return;
         }
       } else if (!!count) {
+        elems.sound(elems.audio.open);
         elem.className = classNames.number + " d" + count;
         elem.innerHTML = count;
       }
@@ -1044,6 +1105,5 @@
 
 </html>
 
-<!-- TODO:单独保存游戏设置 -->
 <!-- TODO:AI扫雷+提示 -->
 <!-- TODO:AI思路记忆+重播 -->
