@@ -215,12 +215,12 @@
 <body>
   <div id="parent">
     <div>
-      <audio id="bg" src="audio/bg.mp3" loop preload="metadata"></audio>
+      <audio id="bg" src="audio/bg.mp3" loop preload="auto"></audio>
       <audio id="mark" src="audio/mark.mp3" preload="auto"></audio>
       <audio id="open" src="audio/open.mp3" preload="auto"></audio>
       <audio id="good" src="audio/good.mp3" preload="auto"></audio>
-      <audio id="win" src="audio/win.mp3" preload="metadata"></audio>
-      <audio id="fail" src="audio/fail.mp3" preload="metadata"></audio>
+      <audio id="win" src="audio/win.mp3" preload="auto"></audio>
+      <audio id="fail" src="audio/fail.mp3" preload="auto"></audio>
     </div>
     <div id="tools">
       <table style="width:100%">
@@ -790,6 +790,7 @@
       tools.calcGameTime();
       options.wins.push(Number(tools.thisGameTimed));
       hightScore(tools.thisGameTimed);
+      clearSave();
       tools.state = states.win;
       showLayer();
     }
