@@ -84,6 +84,24 @@
     #layer input[type='number'] {
       width: 50px;
     }
+    #layer input[type=range]{
+      vertical-align: top;
+      margin-top: 10px;
+      outline: none;
+      -webkit-appearance: none;/*清除系统默认样式*/  
+      width:56% !important;  
+      background: -webkit-linear-gradient(#61bd12, #61bd12) no-repeat, #ddd;  
+      background-size: 30% 100%;/*设置左右宽度比例*/  
+      height: 3px;/*横条的高度*/
+    }
+    #layer input[type=range]::-webkit-slider-thumb {  
+	    -webkit-appearance: none;/*清除系统默认样式*/
+	    height:16px;/*拖动块高度*/  
+      width: 16px;/*拖动块宽度*/  
+      background: #fff;/*拖动块背景*/  
+	    border-radius: 50%; /*外观设置为圆形*/  
+	    border: solid 1px #ddd; /*设置边框*/  
+    } 
 
     #tools {
       width: 100%;
@@ -212,6 +230,7 @@
             <input type="radio" name="action" id="markAction" value="mark" /><label for="markAction">标记</label>
             <button class="btn" id="pauseBtn">暂停</button>
             <button class="btn" id="levelBtn">难度</button>
+            <button class="btn" id="audioBtn">声音</button>
           </td>
         </tr>
         <tr>
@@ -259,6 +278,15 @@
         <button class="btn" name="backBtn">返回</button>
         <button class="btn" name="newGameBtn">确定</button>
       </div>
+      <div id="audio" class="layerCenter" hidden>
+        <span id="audioState">声音</span><br />
+        <ul>
+          <li><input type="checkbox" id="muted"/><label for="muted">静音</label></li>
+          <li><label for="music">音乐</label><input type="range" id="music" min="0" max="10"/></li>
+          <li><label for="sound">音效</label><input type="range" id="sound" min="0" max="10"/></li>
+        </ul>
+        <button class="btn" name="backBtn">返回</button>
+      </div>
     </div>
     <ul>
       <li>长按可显示操作</li>
@@ -304,6 +332,7 @@
       loading: '加载中...',
       newGame: '新游戏',
       level: '难度',
+      audio: '声音',
       playing: '游戏中',
       pause: '暂停',
       win: '胜利！',
@@ -315,6 +344,7 @@
       markAction: null,
       pauseBtn: null,
       levelBtn: null,
+      audioBtn: null,
 
       mine: null,
       state: null,
@@ -349,6 +379,12 @@
       stopState: null,
       clearScoreBtn: null,
 
+      layerAudio: null,
+      audioState: null,
+      muted: null,
+      music: null,
+      sound: null,
+
       audio: {
         bg: null,
         mark: null,
@@ -376,167 +412,204 @@
         return elems.lvCustom.id;
       },
       init: function () {
-        this.game = document.getElementById('game');
+        var getElements = function() {
+          elems.game = document.getElementById('game');
 
-        this.markAction = document.getElementById('markAction');
-        this.pauseBtn = document.getElementById('pauseBtn');
-        this.levelBtn = document.getElementById('levelBtn');
+          elems.markAction = document.getElementById('markAction');
+          elems.pauseBtn = document.getElementById('pauseBtn');
+          elems.levelBtn = document.getElementById('levelBtn');
+          elems.audioBtn = document.getElementById('audioBtn');
 
-        this.mine = document.getElementById('mine');
-        this.state = document.getElementById('state');
-        this.time = document.getElementById('time');
+          elems.mine = document.getElementById('mine');
+          elems.state = document.getElementById('state');
+          elems.time = document.getElementById('time');
 
-        this.layer = document.getElementById('layer');
+          elems.layer = document.getElementById('layer');
 
-        this.layerAction = document.getElementById('action');
-        this.openBtn = document.getElementById('openBtn');
-        this.openAroundBtn = document.getElementById('openAroundBtn');
-        this.markBtn = document.getElementById('markBtn');
+          elems.layerAction = document.getElementById('action');
+          elems.openBtn = document.getElementById('openBtn');
+          elems.openAroundBtn = document.getElementById('openAroundBtn');
+          elems.markBtn = document.getElementById('markBtn');
 
-        this.layerPause = document.getElementById('pause');
-        this.pauseState = document.getElementById('pauseState');
-        this.saveGameBtn = document.getElementById('saveGameBtn');
-        this.loadGameBtn = document.getElementById('loadGameBtn');
-        this.saveState = document.getElementById('saveState');
+          elems.layerPause = document.getElementById('pause');
+          elems.pauseState = document.getElementById('pauseState');
+          elems.saveGameBtn = document.getElementById('saveGameBtn');
+          elems.loadGameBtn = document.getElementById('loadGameBtn');
+          elems.saveState = document.getElementById('saveState');
 
-        this.layerLevel = document.getElementById('level');
-        this.levelState = document.getElementById('levelState');
-        this.lvEasy = document.getElementById('lvEasy');
-        this.lvNormal = document.getElementById('lvNormal');
-        this.lvHard = document.getElementById('lvHard');
-        this.lvCustom = document.getElementById('lvCustom');
-        this.hCount = document.getElementById('hCount');
-        this.vCount = document.getElementById('vCount');
-        this.mCount = document.getElementById('mCount');
+          elems.layerLevel = document.getElementById('level');
+          elems.levelState = document.getElementById('levelState');
+          elems.lvEasy = document.getElementById('lvEasy');
+          elems.lvNormal = document.getElementById('lvNormal');
+          elems.lvHard = document.getElementById('lvHard');
+          elems.lvCustom = document.getElementById('lvCustom');
+          elems.hCount = document.getElementById('hCount');
+          elems.vCount = document.getElementById('vCount');
+          elems.mCount = document.getElementById('mCount');
 
-        this.layerStop = document.getElementById('stop');
-        this.stopState = document.getElementById('stopState');
-        this.clearScoreBtn = document.getElementById('clearScoreBtn');
+          elems.layerStop = document.getElementById('stop');
+          elems.stopState = document.getElementById('stopState');
+          elems.clearScoreBtn = document.getElementById('clearScoreBtn');
 
-        this.audio.bg = document.getElementById('bg');
-        this.audio.mark = document.getElementById('mark');
-        this.audio.open = document.getElementById('open');
-        this.audio.good = document.getElementById('good');
-        this.audio.win = document.getElementById('win');
-        this.audio.fail = document.getElementById('fail');
+          elems.layerAudio = document.getElementById('audio');
+          elems.audioState = document.getElementById('audioState');
+          elems.muted = document.getElementById('muted');
+          elems.music = document.getElementById('music');
+          elems.sound = document.getElementById('sound');
 
-        //事件
-        elems.pauseBtn.onclick = gamePause;
-        elems.levelBtn.onclick = gameLevel;
-        elems.clearScoreBtn.onclick = clearHightScore;
-
-        elems.openBtn.onclick = function () {
-          elems.layer.hidden = true;
-          cellClick({ cell: elems.layerCell, mark: false });
-          elems.layerCell = null;
-        };
-        elems.openAroundBtn.onclick = function () {
-          elems.layer.hidden = true;
-          openAround(elems.layerCell);
-          elems.layerCell = null;
+          elems.audio.bg = document.getElementById('bg');
+          elems.audio.mark = document.getElementById('mark');
+          elems.audio.open = document.getElementById('open');
+          elems.audio.good = document.getElementById('good');
+          elems.audio.win = document.getElementById('win');
+          elems.audio.fail = document.getElementById('fail');
         }
-        elems.markBtn.onclick = function () {
-          elems.layer.hidden = true;
-          cellClick({ cell: elems.layerCell, mark: true });
-          elems.layerCell = null;
-        };
+        getElements();
 
-        elems.saveGameBtn.onclick = saveGame;
-        elems.loadGameBtn.onclick = loadGame;
-
-        var backBtns = document.getElementsByName('backBtn');
-        for (let i = 0; i < backBtns.length; i++) {
-          backBtns[i].onclick = gameBack;
-        }
-
-        var layerNewGame = function () {
-          var valid = true;
-          if (isNaN(elems.hCount.valueAsNumber)) {
-            elems.hCount.style.borderColor = 'red';
-            valid = false;
-          } else {
-            elems.hCount.style.borderColor = 'unset';
+        var bind = function() {
+          //工具栏
+          elems.pauseBtn.onclick = gamePause;
+          elems.levelBtn.onclick = gameLevel;
+          elems.audioBtn.onclick = function() {
+            tools.backState = tools.state;
+            tools.state = states.audio;
+            tools.calcGameTime();
+            showLayer();
           }
-          if (isNaN(elems.vCount.valueAsNumber)) {
-            elems.vCount.style.borderColor = 'red';
-            valid = false;
-          } else {
-            elems.vCount.style.borderColor = 'unset';
-          }
-          if (isNaN(elems.mCount.valueAsNumber)) {
-            elems.mCount.style.borderColor = 'red';
-            valid = false;
-          } else {
-            elems.mCount.style.borderColor = 'unset';
-          }
-          if (!valid) return;
-          setGame(false, elems.hCount.valueAsNumber, elems.vCount.valueAsNumber, elems.mCount.valueAsNumber);
-          newGame();
-          gameBack();
-        };
-        var newGameBtns = document.getElementsByName('newGameBtn');
-        for (let i = 0; i < newGameBtns.length; i++) {
-          newGameBtns[i].onclick = layerNewGame;
-        }
 
-        var layerRestart = function () {
-          newGame(true);
-          gameBack();
-        };
-        var restartBtns = document.getElementsByName('restartBtn');
-        for (let i = 0; i < restartBtns.length; i++) {
-          restartBtns[i].onclick = layerRestart;
-        }
-
-        this.lvEasy.onclick = function () {
-          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
-          elems.hCount.value = 9;
-          elems.vCount.value = 9;
-          elems.mCount.value = 10;
-        }
-        this.lvNormal.onclick = function () {
-          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
-          elems.hCount.value = 16;
-          elems.vCount.value = 16;
-          elems.mCount.value = 40;
-        }
-        this.lvHard.onclick = function () {
-          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
-          elems.hCount.value = 30;
-          elems.vCount.value = 16;
-          elems.mCount.value = 99;
-        }
-        this.lvCustom.onclick = function () {
-          elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = false;
-        }
-
-        this.audio.win.onplay = this.audio.fail.onplay = () => {
-          this.audio.bg.volume = 0;
-        };
-        this.audio.win.onended = this.audio.fail.onended = () => {
-          this.audio.bg.volume = settings.musicVolume;
-        };
-        this.music = function () {
-          elems.audio.bg.muted = settings.muted;
-          elems.audio.bg.volume = settings.musicVolume;
-          if (!settings.muted && settings.musicVolume > 0) {
-            elems.audio.bg.play();
-            document.onclick = null;
-          } else if (elems.audio.play) {
-            elems.audio.bg.pause();
+          //操作
+          elems.openBtn.onclick = function () {
+            elems.layer.hidden = true;
+            cellClick({ cell: elems.layerCell, mark: false });
+            elems.layerCell = null;
+          };
+          elems.openAroundBtn.onclick = function () {
+            elems.layer.hidden = true;
+            openAround(elems.layerCell);
+            elems.layerCell = null;
           }
-        }
-        this.sound = function (elem) {
-          elem.muted = settings.muted;
-          elem.volume = settings.soundVolume;
-          if (!settings.muted && settings.soundVolume > 0) {
-            elem.play();
-          } else {
-            elem.pause();
+          elems.markBtn.onclick = function () {
+            elems.layer.hidden = true;
+            cellClick({ cell: elems.layerCell, mark: true });
+            elems.layerCell = null;
+          };
+
+          //暂停
+          elems.saveGameBtn.onclick = saveGame;
+          elems.loadGameBtn.onclick = loadGame;
+          elems.clearScoreBtn.onclick = clearHightScore;
+
+          //公共
+          var backBtns = document.getElementsByName('backBtn');
+          for (let i = 0; i < backBtns.length; i++) {
+            backBtns[i].onclick = gameBack;
           }
+
+          var layerNewGame = function () {
+            var valid = true;
+            if (isNaN(elems.hCount.valueAsNumber)) {
+              elems.hCount.style.borderColor = 'red';
+              valid = false;
+            } else {
+              elems.hCount.style.borderColor = 'unset';
+            }
+            if (isNaN(elems.vCount.valueAsNumber)) {
+              elems.vCount.style.borderColor = 'red';
+              valid = false;
+            } else {
+              elems.vCount.style.borderColor = 'unset';
+            }
+            if (isNaN(elems.mCount.valueAsNumber)) {
+              elems.mCount.style.borderColor = 'red';
+              valid = false;
+            } else {
+              elems.mCount.style.borderColor = 'unset';
+            }
+            if (!valid) return;
+            setGame(false, elems.hCount.valueAsNumber, elems.vCount.valueAsNumber, elems.mCount.valueAsNumber);
+            newGame();
+            gameBack();
+          };
+          var newGameBtns = document.getElementsByName('newGameBtn');
+          for (let i = 0; i < newGameBtns.length; i++) {
+            newGameBtns[i].onclick = layerNewGame;
+          }
+
+          var layerRestart = function () {
+            newGame(true);
+            gameBack();
+          };
+          var restartBtns = document.getElementsByName('restartBtn');
+          for (let i = 0; i < restartBtns.length; i++) {
+            restartBtns[i].onclick = layerRestart;
+          }
+
+          //难度
+          elems.lvEasy.onclick = function () {
+            elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+            elems.hCount.value = 9;
+            elems.vCount.value = 9;
+            elems.mCount.value = 10;
+          }
+          elems.lvNormal.onclick = function () {
+            elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+            elems.hCount.value = 16;
+            elems.vCount.value = 16;
+            elems.mCount.value = 40;
+          }
+          elems.lvHard.onclick = function () {
+            elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = true;
+            elems.hCount.value = 30;
+            elems.vCount.value = 16;
+            elems.mCount.value = 99;
+          }
+          elems.lvCustom.onclick = function () {
+            elems.hCount.disabled = elems.vCount.disabled = elems.mCount.disabled = false;
+          }
+
+          //声音
+          elems.muted.onchange = function() {
+            settings.muted = elems.muted.checked;
+            elems.audio.bg.muted = settings.muted;
+          }
+          elems.music.onchange = function() {
+            settings.musicVolume = Number(elems.music.value) / 10;
+            elems.audio.bg.volume = settings.musicVolume;
+            elems.music.style.backgroundSize = (settings.musicVolume * 100) + "% 100%"
+          }
+          elems.sound.onchange = function() {
+            settings.soundVolume = Number(elems.sound.value) / 10;
+            elems.sound.style.backgroundSize = (settings.soundVolume * 100) + "% 100%"
+          }
+          elems.audio.win.onplay = elems.audio.fail.onplay = () => {
+            elems.audio.bg.volume = 0;
+          };
+          elems.audio.win.onended = elems.audio.fail.onended = () => {
+            elems.audio.bg.volume = settings.musicVolume;
+          };
+          elems.playMusic = function () {
+            elems.audio.bg.muted = settings.muted;
+            elems.audio.bg.volume = settings.musicVolume;
+            if (!settings.muted && settings.musicVolume > 0) {
+              elems.audio.bg.play();
+              document.onclick = null;
+            } else if (elems.audio.play) {
+              elems.audio.bg.pause();
+            }
+          }
+          elems.playSound = function (elem) {
+            elem.muted = settings.muted;
+            elem.volume = settings.soundVolume;
+            if (!settings.muted && settings.soundVolume > 0) {
+              elem.play();
+            } else {
+              elem.pause();
+            }
+          }
+          //无法自动播放音乐,第一次点击时播放
+          document.onclick = elems.playMusic;
         }
-        //无法自动播放音乐,第一次点击时播放
-        document.onclick = this.music;
+        bind();
       }
     }
 
@@ -570,7 +643,7 @@
       mCount: 10,
 
       muted: false,
-      musicVolume: 0.5,
+      musicVolume: 0.1,
       soundVolume: 1
     };
     var tools = {
@@ -693,7 +766,7 @@
     var gameOver = function (cell) {
       tools.state = states.loading;
 
-      elems.sound(elems.audio.fail);
+      elems.playSound(elems.audio.fail);
       elems.timer && clearInterval(elems.timer);
       tools.calcGameTime();
       options.fails.push(Number(tools.time));
@@ -712,7 +785,7 @@
     }
     var gameWin = function (cell) {
       tools.state = states.loading;
-      elems.sound(elems.audio.win);
+      elems.playSound(elems.audio.win);
       elems.timer && clearInterval(elems.timer);
       tools.calcGameTime();
       options.wins.push(Number(tools.thisGameTimed));
@@ -744,13 +817,7 @@
     }
 
     var saveGame = function () {
-      var saveSet = {
-        lvName: elems.lvName(),
-        hCount: settings.hCount,
-        vCount: settings.vCount,
-        mCount: settings.mCount
-      };
-      setCookie(cookies.setting, JSON.stringify(saveSet));
+      saveSettings();
       if (!canSave()) return false;
 
       try {
@@ -827,16 +894,34 @@
       delCookie(cookies.save);
     }
     var defaultGame = function () {
-      var saveSet = getCookie(cookies.setting);
-      
+      loadSettings();
+      newGame();
+    }
+    var saveSettings = function () {
+      var save = {
+        lvName: elems.lvName(),
+        hCount: settings.hCount,
+        vCount: settings.vCount,
+        mCount: settings.mCount,
+        muted: settings.muted,
+        musicVolume: settings.musicVolume,
+        soundVolume: settings.soundVolume
+      };
+      setCookie(cookies.setting, JSON.stringify(save));
+    }
+    var loadSettings = function() {
+      var save = null;
       try{
-        saveSet = JSON.parse(saveSet);
+        save = getCookie(cookies.setting);
+        save = JSON.parse(save);
       } catch (error) {
         console.log(error);
       }
-      saveSet = saveSet || { lvName: 'lvNormal' };
-      setGame(saveSet.lvName, saveSet.hCount, saveSet.vCount, saveSet.mCount);
-      newGame();
+      save = save || { lvName: 'lvNormal' };
+      if(save.muted !== undefined) settings.muted = save.muted;
+      if(save.musicVolume !== undefined) settings.musicVolume = save.musicVolume;
+      if(save.soundVolume !== undefined) settings.soundVolume = save.soundVolume;
+      setGame(save.lvName, save.hCount, save.vCount, save.mCount);
     }
 
     var hightScore = function (time) {
@@ -882,6 +967,7 @@
     }
 
     var showLayer = function () {
+      elems.layerStop.hidden = elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = elems.layerAudio.hidden = true;
       switch (tools.state) {
         case states.newGame:
         case states.win:
@@ -898,14 +984,12 @@
             scoreText = new Number(time / 1000).toFixed(2) + '秒';
             elems.stopState.innerHTML += "<br/>最高纪录:" + scoreText;
           }
-          elems.layerAction.hidden = elems.layerPause.hidden = elems.layerLevel.hidden = true;
           elems.layerStop.hidden = false;
           break;
         case states.pause:
           //暂停
           elems.layer.className = classNames.pause;
           elems.pauseState.innerText = '【' + tools.state + '】';
-          elems.layerAction.hidden = elems.layerStop.hidden = elems.layerLevel.hidden = true;
           var save = canSave();
           elems.saveGameBtn.hidden = !save;
           var load = canLoad();
@@ -916,13 +1000,22 @@
           //难度
           elems.layer.className = classNames.pause;
           elems.levelState.innerText = '【' + tools.state + '】';
-          elems.layerAction.hidden = elems.layerStop.hidden = elems.layerPause.hidden = true;
           elems.layerLevel.hidden = false;
+          break;
+        case states.audio:
+          //声音
+          elems.layer.className = classNames.pause;
+          elems.audioState.innerText = '【' + tools.state + '】';
+          elems.muted.checked = settings.muted;
+          elems.music.value = settings.musicVolume * 10;
+          elems.sound.value = settings.soundVolume * 10;
+          elems.music.style.backgroundSize = (settings.musicVolume * 100) + "% 100%"
+          elems.sound.style.backgroundSize = (settings.soundVolume * 100) + "% 100%"
+          elems.layerAudio.hidden = false;
           break;
         case states.playing:
           //操作
           elems.layer.className = "";
-          elems.layerPause.hidden = elems.layerStop.hidden = elems.layerLevel.hidden = true;
           var elem = canOpen(elems.layerCell);
           elems.openBtn.hidden = !elem;
           elem = canOpenAround(elems.layerCell);
@@ -941,7 +1034,7 @@
     var mark = function (cell) {
       var elem = canMark(cell);
       if (!elem) return;
-      elems.sound(elems.audio.mark);
+      elems.playSound(elems.audio.mark);
       switch (elem.className) {
         case classNames.flag:
           elem.className = classNames.nosure;
@@ -978,7 +1071,7 @@
         gameOver(cell);
         return;
       } else if (count === 0) {
-        elems.sound(elems.audio.good);
+        elems.playSound(elems.audio.good);
         elem.className = classNames.number;
         var around = getAroundCells(cell);
         for (let i = 0; i < around.length; i++) {
@@ -986,7 +1079,7 @@
           if (tools.state !== states.playing) return;
         }
       } else if (!!count) {
-        elems.sound(elems.audio.open);
+        elems.playSound(elems.audio.open);
         elem.className = classNames.number + " d" + count;
         elem.innerHTML = count;
       }
@@ -1133,7 +1226,7 @@
     }
     document.onload = init();
     window.onbeforeunload = saveGame;
-    window.onblur = gamePause;
+    //window.onblur = gamePause;
   </script>
 </body>
 
