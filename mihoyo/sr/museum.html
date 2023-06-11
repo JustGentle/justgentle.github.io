@@ -1,1 +1,48 @@
 <!DOCTYPE html>
+<html>
+    <head>
+        <title>冬城博物奇珍簿</title>
+        <script type="text/javascript">
+            const ui = {};
+            const areas = {};
+            const defs = {};
+            const emps = {};
+            const init = () => {
+                mydata();
+                ui.data = document.querySelector('.data');
+                ui.result = document.querySelector('.result');
+                ui.data.innerText = JSON.stringify(areas) + JSON.stringify(defs) + JSON.stringify(emps);
+            };
+            const calc = () => {
+                
+            };
+            const mydata = () => {
+                Object.assign(areas, {
+                    "综合区-外": [240,195,235],
+                    "综合区-内": [205,245,150]
+                });
+                Object.assign(inits, {
+                    "综合区-外": [70,70,70],
+                    "综合区-内": [90,90,90]
+                });
+                Object.assign(emps, {
+                    "希露瓦": [68,57,10],
+                    "匹克": [44,54,10],
+                    "尤利安": [52,20,36],
+                    "吉尔伯特": [36,40,20],
+                    "莉拉": [52,14,30],
+                    "费斯曼": [50,29,17],
+                    "佩拉": [30,30,30],
+                    "亚诺": [40,8,30],
+                    "伊蕾恩": [26,26,26],
+                    "希露瓦的狂热粉丝": [20,44,14]
+                });
+            };
+        </script>
+    </head>
+    <body onload="init()">
+        <div class="data"></div>
+        <button onclick="calc()">计算</button>
+        <div class="result"></div>
+    </body>
+</html>
