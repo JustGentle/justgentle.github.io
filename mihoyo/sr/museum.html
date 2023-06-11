@@ -15,22 +15,32 @@
                 ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
             };
             function calc() {
+                const values = {};
                 const results = {};
                 for (const area in areas) {
+                    values[area] = {};
                     results[area] = {};
                     for (const emp1 in emps) {
                         for (const emp2 in emps) {
                             if (emp1 === emp2) continue;
                             for (const emp3 in emps) {
                                 if (emp1 === emp3 || emp2 === emp3) continue;
-                                results[area][`${emp1}+${emp2}+${emp3}`] = [
+                                values[area][`${emp1}+${emp2}+${emp3}`] = [
                                     emps[emp1][0]+emps[emp2][0]+emps[emp3][0],
                                     emps[emp1][1]+emps[emp2][1]+emps[emp3][1],
                                     emps[emp1][2]+emps[emp2][2]+emps[emp3][2]
                                 ];
+                                results[area][`${emp1}+${emp2}+${emp3}`] = [
+                                    defs[area][0] + emps[emp1][0] + emps[emp2][0] + emps[emp3][0] - areas[area][0],
+                                    defs[area][1] + emps[emp1][1] + emps[emp2][1] + emps[emp3][1] - areas[area][1],
+                                    defs[area][2] + emps[emp1][2] + emps[emp2][2] + emps[emp3][2] - areas[area][2]
+                                ];
                             }
                         }
                     }
+                }
+                for (const area in areas) {
+                    
                 }
                 ui.result.innerText = JSON.stringify(results,null,2);
             };
@@ -59,8 +69,8 @@
         </script>
     </head>
     <body onload="init()">
-        <div class="data"></div>
+        <pre class="data"></pre>
         <button onclick="calc()">计算</button>
-        <div class="result"></div>
+        <pre class="result"></pre>
     </body>
 </html>
