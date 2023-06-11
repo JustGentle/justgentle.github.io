@@ -77,7 +77,7 @@
                 left: 0;
                 top: 0;
                 height: 100%;
-                width: calc(attr(data-value) / 500 * 100%);
+                width: attr(data-value);
             }
             .area-process-sum.failed {
                 background-color: red;
@@ -198,6 +198,8 @@
             const defs = {};
             const emps = {};
             const levels = ['C','B','A','S'];
+            let values = {};
+            let results = {};
             function init() {
                 mydata();
                 ui.data = document.querySelector('.data');
@@ -206,8 +208,8 @@
             };
             function calc() {
                 ui.result.innerHtml = '';
-                const values = {};
-                const results = {};
+                values = {};
+                results = {};
                 for (const area in areas) {
                     values[area] = {};
                     results[area] = {};
@@ -248,9 +250,10 @@
                 
             };
             function getArea(area, names, result) {
-                let namearr = names.split('+');
-                let level = result.reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
-                let html = `<div class="area" data-name="${area}">
+                const value = values[area][names];
+                const namearr = names.split('+');
+                const level = result.reduce((sum, val) => val < 0 ? sum : sum + 1, 0);
+                const html = `<div class="area" data-name="${area}">
                     <div class="area-switch">
                         <div class="area-name">${area}</div>
                     </div>
@@ -259,13 +262,13 @@
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">游览时长</div>
-                                <div class="area-value-sum ${result[0]>=areas[area][0]?'success':'failed'}">${result[0]}</div>
+                                <div class="area-value-sum ${value[0]>=areas[area][0]?'success':'failed'}">${value[0]}</div>
                                 <div class="area-value-split">/</div>
                                 <div class="area-value-max">${areas[area][0]}</div>
                             </div>
                             <div class="area-value-process">
-                                <div class="area-process-sum" data-value="${result[0]}"></div>
-                                <div class="area-process-max" data-value="${areas[area][0]}"></div>
+                                <div class="area-process-sum" data-value="${value[0]/500.0*100}%"></div>
+                                <div class="area-process-max" data-value="${areas[area][0]/500.0*100}%"></div>
                             </div>
                         </div>
                         <div class="area-value">
