@@ -17,12 +17,12 @@
             function calc() {
                 const results = {};
                 for (const area in areas) {
+                    results[area] = {};
                     for (const emp1 in emps) {
                         for (const emp2 in emps) {
                             if (emp1 === emp2) continue;
                             for (const emp3 in emps) {
                                 if (emp1 === emp3 || emp2 === emp3) continue;
-                                results[area] = {};
                                 results[area][`${emp1}+${emp2}+${emp3}`] = [
                                     emps[emp1][0]+emps[emp2][0]+emps[emp3][0],
                                     emps[emp1][1]+emps[emp2][1]+emps[emp3][1],
