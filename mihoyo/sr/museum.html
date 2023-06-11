@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-cn">
     <head>
         <title>冬城博物奇珍簿</title>
         <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0 user-scalable=yes" />
@@ -70,14 +70,14 @@
             .area-value-process {
                 position: relative;
                 background-color: #ddd;
-                height: .5em;
+                height: .25em;
+                margin: 2px 0;
             }
             .area-process-sum {
                 position: absolute;
                 left: 0;
                 top: 0;
                 height: 100%;
-                width: attr(data-value);
             }
             .area-process-sum.failed {
                 background-color: red;
@@ -88,9 +88,8 @@
             .area-process-max {
                 position: absolute;
                 left: 0;
-                top: 0;
-                height: 100%;
-                width: calc(attr(data-value) / 500 * 100%);
+                top: -2px;
+                height: calc(100% + 4px);
                 border-right: 2px solid white;
             }
             .area-emps {
@@ -146,7 +145,8 @@
                 flex: 1;
                 position: relative;
                 background-color: #ddd;
-                height: .5em;
+                height: .25em;
+                margin: 2px 0;
             }
             .emp-value-sum {
                 position: absolute;
@@ -180,12 +180,21 @@
             .btn.primary {
                 background-color: gold;
             }
+            .btn:disabled {
+                background-color: #ddd;
+            }
 
             .result {
                 display: flex;
                 flex-wrap: wrap;
                 padding: 10px;
                 gap: 10px;
+            }
+            .result>input[name='area'] {
+                display: none;
+            }
+            .result>input[name='area']:not(:checked)+.areas {
+                display: none;
             }
             .result .area {
                 width: 15em;
@@ -198,30 +207,39 @@
             const defs = {};
             const emps = {};
             const levels = ['C','B','A','S'];
-            let values = {};
+            let currentArea = '';
+            let sums = {};
             let results = {};
             function init() {
                 mydata();
                 ui.data = document.querySelector('.data');
+                ui.btn = document.querySelector('.btn.primary');
                 ui.result = document.querySelector('.result');
-                //ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
+                ui.area = ui.data.querySelector('.area');
+                if (Object.keys(areas).length) {
+                    setArea(Object.keys(areas)[0]);
+                }
             };
             function calc() {
+                ui.btn.disabled = true;
                 ui.result.innerHtml = '';
-                values = {};
+                sums = {};
                 results = {};
+                const max = 15;
+                const names = Object.keys(emps);
                 for (const area in areas) {
-                    values[area] = {};
+                    sums[area] = {};
                     results[area] = {};
-                    for (const emp1 in emps) {
-                        for (const emp2 in emps) {
-                            if (emp1 === emp2) continue;
-                            for (const emp3 in emps) {
-                                if (emp1 === emp3 || emp2 === emp3) continue;
-                                values[area][`${emp1}+${emp2}+${emp3}`] = [
-                                    emps[emp1][0]+emps[emp2][0]+emps[emp3][0],
-                                    emps[emp1][1]+emps[emp2][1]+emps[emp3][1],
-                                    emps[emp1][2]+emps[emp2][2]+emps[emp3][2]
+                    for (let x = 0; x < names.length - 2; x++) {
+                        const emp1 = names[x];
+                        for (let y = x + 1; y < names.length - 1; y++) {
+                            const emp2 = names[y];
+                            for (let z = y + 1; z < names.length; z++) {
+                                const emp3 = names[z];
+                                sums[area][`${emp1}+${emp2}+${emp3}`] = [
+                                    defs[area][0] + emps[emp1][0]+emps[emp2][0]+emps[emp3][0],
+                                    defs[area][1] + emps[emp1][1]+emps[emp2][1]+emps[emp3][1],
+                                    defs[area][2] + emps[emp1][2]+emps[emp2][2]+emps[emp3][2]
                                 ];
                                 results[area][`${emp1}+${emp2}+${emp3}`] = [
                                     defs[area][0] + emps[emp1][0] + emps[emp2][0] + emps[emp3][0] - areas[area][0],
@@ -234,25 +252,113 @@
                 }
                 for (const area in areas) {
                     const keys = Object.keys(results[area]).sort((a,b) => {
-                        const suma = results[area][a].reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
-                        const sumb = results[area][b].reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
-                        return sumb - suma;
+                        const aLevel = getResultLevel(results[area][a]);
+                        const bLevel = getResultLevel(results[area][b]);
+                        if (aLevel != bLevel) {
+                            return bLevel - aLevel;
+                        }
+                        const aOffset = getResultOffset(results[area][a]);
+                        const bOffset = getResultOffset(results[area][b]);
+                        return aOffset - bOffset;
                     });
+                    let count = 0;
                     const sorted = {};
                     for (const key of keys) {
                         sorted[key] = results[area][key];
-                        const elem = document.createElement('div');
-                        ui.result.appendChild(elem);
-                        elem.outerHTML = getArea(area, key, sorted[key]);
+                        if (++count > max) break;
+                        addResult(area, key);
                     }
                     results[area] = sorted;
                 }
-                
+                ui.btn.disabled = false;
             };
-            function getArea(area, names, result) {
-                const value = values[area][names];
+            function getResultLevel(result) {
+                return result.reduce((level, val) => val < 0 ? level : level + 1, 0);
+            }
+            function getResultOffset(result) {
+                return result.reduce((offset, val) => offset + val, 0);
+            }
+            function prevArea() {
+                const keys = Object.keys(areas);
+                if (keys.length <= 1) return;
+                let index = keys.indexOf(currentArea);
+                index--;
+                if (index < 0) index = keys.length - 1;
+                setArea(keys[index]);
+            }
+            function nextArea() {
+                const keys = Object.keys(areas);
+                if (keys.length <= 1) return;
+                let index = keys.indexOf(currentArea);
+                index++;
+                if (index >= keys.length) index = 0;
+                setArea(keys[index]);
+            }
+            function setArea(area) {
+                currentArea = area;
+                const sum = defs[area];
+                const max = areas[area];
+                const html = `<div class="area" data-name="${area}">
+                    <div class="area-switch">
+                        <div class="area-prev" onclick="prevArea()">&lt;</div>
+                        <div class="area-name">${area}</div>
+                        <div class="area-next" onclick="nextArea()">&gt;</div>
+                    </div>
+                    <div class="area-info"></div>
+                    <div class="area-values">
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">游览时长</div>
+                                <div class="area-value-sum ${sum[0]>=max[0]?'success':'failed'}">${sum[0]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${max[0]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum ${sum[0]>=max[0]?'success':'failed'}" style="width:${sum[0]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[0]/500.0*100}%"></div>
+                            </div>
+                        </div>
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">科普价值</div>
+                                <div class="area-value-sum ${sum[1]>=max[1]?'success':'failed'}">${sum[1]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${max[1]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum ${sum[1]>=max[1]?'success':'failed'}" style="width:${sum[1]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[1]/500.0*100}%"></div>
+                            </div>
+                        </div>
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">吸引人流</div>
+                                <div class="area-value-sum ${sum[2]>=max[2]?'success':'failed'}">${sum[2]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${max[2]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum ${sum[2]>=max[2]?'success':'failed'}" style="width:${sum[2]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[2]/500.0*100}%"></div>
+                            </div>
+                        </div>
+                        <div class="area-emps">
+                            <div class="area-emp"></div>
+                            <div class="area-emp"></div>
+                            <div class="area-emp"></div>
+                        </div>
+                    </div>
+                </div>`;
+                
+                ui.area.outerHTML = html;
+                ui.area = ui.data.querySelector('.area');
+                return html;
+            }
+            function addResult(area, names) {
                 const namearr = names.split('+');
-                const level = result.reduce((sum, val) => val < 0 ? sum : sum + 1, 0);
+                const sum = sums[area][names];
+                const max = areas[area];
+                const level = getResultLevel(results[area][names]);
                 const html = `<div class="area" data-name="${area}">
                     <div class="area-switch">
                         <div class="area-name">${area}</div>
@@ -262,37 +368,37 @@
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">游览时长</div>
-                                <div class="area-value-sum ${value[0]>=areas[area][0]?'success':'failed'}">${value[0]}</div>
+                                <div class="area-value-sum ${sum[0]>=max[0]?'success':'failed'}">${sum[0]}</div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${areas[area][0]}</div>
+                                <div class="area-value-max">${max[0]}</div>
                             </div>
                             <div class="area-value-process">
-                                <div class="area-process-sum" data-value="${value[0]/500.0*100}%"></div>
-                                <div class="area-process-max" data-value="${areas[area][0]/500.0*100}%"></div>
+                                <div class="area-process-sum ${sum[0]>=max[0]?'success':'failed'}" style="width:${sum[0]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[0]/500.0*100}%"></div>
                             </div>
                         </div>
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">科普价值</div>
-                                <div class="area-value-sum${result[1]>=areas[area][1]?'success':'failed'}">${result[1]}</div>
+                                <div class="area-value-sum ${sum[1]>=max[1]?'success':'failed'}">${sum[1]}</div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${areas[area][1]}</div>
+                                <div class="area-value-max">${max[1]}</div>
                             </div>
                             <div class="area-value-process">
-                                <div class="area-process-sum" data-value="${result[1]}"></div>
-                                <div class="area-process-max" data-value="${areas[area][1]}"></div>
+                                <div class="area-process-sum ${sum[1]>=max[1]?'success':'failed'}" style="width:${sum[1]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[1]/500.0*100}%"></div>
                             </div>
                         </div>
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">吸引人流</div>
-                                <div class="area-value-sum${result[2]>=areas[area][2]?'success':'failed'}">${result[2]}</div>
+                                <div class="area-value-sum ${sum[2]>=max[2]?'success':'failed'}">${sum[2]}</div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${areas[area][2]}</div>
+                                <div class="area-value-max">${max[2]}</div>
                             </div>
                             <div class="area-value-process">
-                                <div class="area-process-sum" data-value="${result[2]}"></div>
-                                <div class="area-process-max" data-value="${areas[area][2]}"></div>
+                                <div class="area-process-sum ${sum[2]>=max[2]?'success':'failed'}" style="width:${sum[2]/500.0*100}%"></div>
+                                <div class="area-process-max" style="width:${max[2]/500.0*100}%"></div>
                             </div>
                         </div>
                         <div class="area-emps">
@@ -302,6 +408,10 @@
                         </div>
                     </div>
                 </div>`;
+                
+                const elem = document.createElement('div');
+                ui.result.appendChild(elem);
+                elem.outerHTML = html;
                 return html;
             }
             function mydata() {
@@ -331,55 +441,6 @@
     <body onload="init()">
         <div class="data">
             <div class="area">
-                <div class="area-switch">
-                    <div class="area-prev">&lt;</div>
-                    <div class="area-name">综合区-外</div>
-                    <div class="area-next">&gt;</div>
-                </div>
-                <div class="area-info">可获取振兴值 2000</div>
-                <div class="area-values">
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">游览时长</div>
-                            <div class="area-value-sum less">70</div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max">240</div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum" data-value="70"></div>
-                            <div class="area-process-max" data-max="240"></div>
-                        </div>
-                    </div>
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">科普价值</div>
-                            <div class="area-value-sum less"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max"></div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum"></div>
-                            <div class="area-process-max"></div>
-                        </div>
-                    </div>
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">吸引人流</div>
-                            <div class="area-value-sum less"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max"></div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum"></div>
-                            <div class="area-process-max"></div>
-                        </div>
-                    </div>
-                    <div class="area-emps">
-                        <div class="area-emp"></div>
-                        <div class="area-emp"></div>
-                        <div class="area-emp"></div>
-                    </div>
-                </div>
             </div>
             <div class="content">
                 <div class="emps">
@@ -409,67 +470,20 @@
                 </div>
                 <div class="btns">
                     <!--<div class="btn default" onclick="clear()">重置</div>-->
-                    <div class="btn primary" onclick="calc()">计算</div>
+                    <button class="btn primary" onclick="calc()">计算</div>
                 </div>
             </div>
         </div>
         <div class="result">
             <!--
-            <div class="area">
-                <div class="area-switch">
-                    <div class="area-name">综合区-外</div>
-                </div>
-                <div class="area-level">C</div>
-                <div class="area-values">
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">游览时长</div>
-                            <div class="area-value-def">70</div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-sum">70</div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max">240</div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum"></div>
-                            <div class="area-process-max"></div>
-                        </div>
-                    </div>
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">科普价值</div>
-                            <div class="area-value-def"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-sum"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max"></div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum"></div>
-                            <div class="area-process-max"></div>
-                        </div>
-                    </div>
-                    <div class="area-value">
-                        <div class="area-value-text">
-                            <div class="area-value-name">吸引人流</div>
-                            <div class="area-value-def"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-sum"></div>
-                            <div class="area-value-split">/</div>
-                            <div class="area-value-max"></div>
-                        </div>
-                        <div class="area-value-process">
-                            <div class="area-process-sum"></div>
-                            <div class="area-process-max"></div>
-                        </div>
-                    </div>
-                    <div class="area-emps">
-                        <div class="area-emp">希露瓦</div>
-                        <div class="area-emp">希露瓦的狂热粉丝</div>
-                        <div class="area-emp">吉尔伯特</div>
-                    </div>
-                </div>
-            </div>
+            <ul class="tabs">
+                <li class="tab"><label for="综合区-外">综合区-外</label></li>
+                <li class="tab"><label for="综合区-内">综合区-内</label></li>
+            </ul>
+            <input type="radio" name="area" id="综合区-外" checked>
+            <div class="areas">综合区-外</div>
+            <input type="radio" name="area" id="综合区-内">
+            <div class="areas">综合区-内</div>
             -->
         </div>
     </body>
