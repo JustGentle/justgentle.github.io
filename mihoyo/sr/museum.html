@@ -7,16 +7,16 @@
             const areas = {};
             const defs = {};
             const emps = {};
-            const init = () => {
+            function init() {
                 mydata();
                 ui.data = document.querySelector('.data');
                 ui.result = document.querySelector('.result');
                 ui.data.innerText = JSON.stringify(areas) + JSON.stringify(defs) + JSON.stringify(emps);
             };
-            const calc = () => {
+            function calc() {
                 
             };
-            const mydata = () => {
+            function mydata() {
                 Object.assign(areas, {
                     "综合区-外": [240,195,235],
                     "综合区-内": [205,245,150]
