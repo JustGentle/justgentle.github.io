@@ -6,18 +6,20 @@
         <style type="text/css">
             body {
                 line-height: 1.2;
+                font-size: 14px;
             }
-            .ui {
+            .data {
                 display: flex;
                 border: 5px double #ddd;
             }
-            .areas {
+            .area {
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 background: black;
                 color: white;
                 padding: 20px;
+                gap: 10px;
             }
             .area-switch {
                 display: flex;
@@ -36,6 +38,9 @@
                 text-align: center;
             }
             .area-info {
+                font-weight: bold;
+            }
+            .area-level {
                 text-align: center;
                 font-size: large;
                 font-weight: bold;
@@ -44,6 +49,7 @@
             .area-values {
                 display: flex;
                 flex-direction: column;
+                gap: 5px;
             }
             .area-value {
                 display: flex;
@@ -55,6 +61,12 @@
             .area-value-name {
                 flex: 1;
             }
+            .area-value-sum.failed {
+                color: red;
+            }
+            .area-value-sum.success {
+                color: gold;
+            }
             .area-value-process {
                 position: relative;
                 background-color: #ddd;
@@ -65,19 +77,23 @@
                 left: 0;
                 top: 0;
                 height: 100%;
-                width: calc(70 / 500 * 100%);
+                width: calc(attr(data-value) / 500 * 100%);
+            }
+            .area-process-sum.failed {
                 background-color: red;
+            }
+            .area-process-sum.success {
+                background-color: gold;
             }
             .area-process-max {
                 position: absolute;
                 left: 0;
                 top: 0;
                 height: 100%;
-                width: calc(240 / 500 * 100%);
+                width: calc(attr(data-value) / 500 * 100%);
                 border-right: 2px solid white;
             }
             .area-emps {
-                margin-top: 10px;
                 align-self: center;
                 display: flex;
                 gap: 10px;
@@ -86,6 +102,7 @@
                 border: 1px solid white;
                 width: 50px;
                 height: 60px;
+                text-align: center;
             }
             .content {
                 flex: 2;
@@ -95,8 +112,8 @@
             }
             .emps {
                 flex: 1;
-                display: grid;
-                grid-template-columns: 1fr 1fr 1fr;
+                display: flex;
+                flex-wrap: wrap;
                 align-items: start;
                 gap: 10px;
                 overflow-y: auto;
@@ -107,6 +124,7 @@
                 background-color: #ddd;
                 border-radius: 2px;
                 padding: 5px;
+                width: 12em;
             }
             .emp-values {
                 background-color: white;
@@ -162,12 +180,24 @@
             .btn.primary {
                 background-color: gold;
             }
+
+            .result {
+                display: flex;
+                flex-wrap: wrap;
+                padding: 10px;
+                gap: 10px;
+            }
+            .result .area {
+                width: 15em;
+                flex: none;
+            }
         </style>
         <script type="text/javascript">
             const ui = {};
             const areas = {};
             const defs = {};
             const emps = {};
+            const levels = ['C','B','A','S'];
             function init() {
                 mydata();
                 ui.data = document.querySelector('.data');
@@ -175,6 +205,7 @@
                 //ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
             };
             function calc() {
+                ui.result.innerHtml = '';
                 const values = {};
                 const results = {};
                 for (const area in areas) {
@@ -208,11 +239,68 @@
                     const sorted = {};
                     for (const key of keys) {
                         sorted[key] = results[area][key];
+                        const elem = document.createElement('div');
+                        ui.result.appendChild(elem);
+                        elem.outerHTML = getArea(area, key, sorted[key]);
                     }
                     results[area] = sorted;
                 }
-                ui.result.innerText = JSON.stringify(results,null,2);
+                
             };
+            function getArea(area, names, result) {
+                let namearr = names.split('+');
+                let level = result.reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
+                let html = `<div class="area" data-name="${area}">
+                    <div class="area-switch">
+                        <div class="area-name">${area}</div>
+                    </div>
+                    <div class="area-level">${levels[level]}</div>
+                    <div class="area-values">
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">游览时长</div>
+                                <div class="area-value-sum ${result[0]>=areas[area][0]?'success':'failed'}">${result[0]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${areas[area][0]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum" data-value="${result[0]}"></div>
+                                <div class="area-process-max" data-value="${areas[area][0]}"></div>
+                            </div>
+                        </div>
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">科普价值</div>
+                                <div class="area-value-sum${result[1]>=areas[area][1]?'success':'failed'}">${result[1]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${areas[area][1]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum" data-value="${result[1]}"></div>
+                                <div class="area-process-max" data-value="${areas[area][1]}"></div>
+                            </div>
+                        </div>
+                        <div class="area-value">
+                            <div class="area-value-text">
+                                <div class="area-value-name">吸引人流</div>
+                                <div class="area-value-sum${result[2]>=areas[area][2]?'success':'failed'}">${result[2]}</div>
+                                <div class="area-value-split">/</div>
+                                <div class="area-value-max">${areas[area][2]}</div>
+                            </div>
+                            <div class="area-value-process">
+                                <div class="area-process-sum" data-value="${result[2]}"></div>
+                                <div class="area-process-max" data-value="${areas[area][2]}"></div>
+                            </div>
+                        </div>
+                        <div class="area-emps">
+                            <div class="area-emp">${namearr[0]}</div>
+                            <div class="area-emp">${namearr[1]}</div>
+                            <div class="area-emp">${namearr[2]}</div>
+                        </div>
+                    </div>
+                </div>`;
+                return html;
+            }
             function mydata() {
                 Object.assign(areas, {
                     "综合区-外": [240,195,235],
@@ -238,14 +326,97 @@
         </script>
     </head>
     <body onload="init()">
-        <div class="ui">
-            <div class="areas">
+        <div class="data">
+            <div class="area">
                 <div class="area-switch">
                     <div class="area-prev">&lt;</div>
                     <div class="area-name">综合区-外</div>
                     <div class="area-next">&gt;</div>
                 </div>
-                <div class="area-info">C</div>
+                <div class="area-info">可获取振兴值 2000</div>
+                <div class="area-values">
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">游览时长</div>
+                            <div class="area-value-sum less">70</div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max">240</div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum" data-value="70"></div>
+                            <div class="area-process-max" data-max="240"></div>
+                        </div>
+                    </div>
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">科普价值</div>
+                            <div class="area-value-sum less"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max"></div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum"></div>
+                            <div class="area-process-max"></div>
+                        </div>
+                    </div>
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">吸引人流</div>
+                            <div class="area-value-sum less"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max"></div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum"></div>
+                            <div class="area-process-max"></div>
+                        </div>
+                    </div>
+                    <div class="area-emps">
+                        <div class="area-emp"></div>
+                        <div class="area-emp"></div>
+                        <div class="area-emp"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="emps">
+                    <div class="emp">
+                        <div class="emp-values">
+                            <div class="emp-value">
+                                <div class="emp-value-text">68</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                            <div class="emp-value">
+                                <div class="emp-value-text">57</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                            <div class="emp-value">
+                                <div class="emp-value-text">10</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="emp-name">希露瓦</div>
+                    </div>
+                </div>
+                <div class="btns">
+                    <!--<div class="btn default" onclick="clear()">重置</div>-->
+                    <div class="btn primary" onclick="calc()">计算</div>
+                </div>
+            </div>
+        </div>
+        <div class="result">
+            <!--
+            <div class="area">
+                <div class="area-switch">
+                    <div class="area-name">综合区-外</div>
+                </div>
+                <div class="area-level">C</div>
                 <div class="area-values">
                     <div class="area-value">
                         <div class="area-value-text">
@@ -290,44 +461,13 @@
                         </div>
                     </div>
                     <div class="area-emps">
-                        <div class="area-emp"></div>
-                        <div class="area-emp"></div>
-                        <div class="area-emp"></div>
+                        <div class="area-emp">希露瓦</div>
+                        <div class="area-emp">希露瓦的狂热粉丝</div>
+                        <div class="area-emp">吉尔伯特</div>
                     </div>
                 </div>
             </div>
-            <div class="content">
-                <div class="emps">
-                    <div class="emp">
-                        <div class="emp-values">
-                            <div class="emp-value">
-                                <div class="emp-value-text">68</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                            <div class="emp-value">
-                                <div class="emp-value-text">57</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                            <div class="emp-value">
-                                <div class="emp-value-text">10</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="emp-name">希露瓦</div>
-                    </div>
-                </div>
-                <div class="btns">
-                    <div class="btn default" onclick="clear()">重置</div>
-                    <div class="btn primary" onclick="calc()">计算</div>
-                </div>
-            </div>
+            -->
         </div>
-        <div class="result"></div>
     </body>
 </html>
