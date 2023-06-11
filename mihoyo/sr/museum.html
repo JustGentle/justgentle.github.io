@@ -40,7 +40,16 @@
                     }
                 }
                 for (const area in areas) {
-                    
+                    const keys = Object.keys(results[area]).sort((a,b) => {
+                        const suma = results[area][a].reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
+                        const sumb = results[area][b].reduce((sum, value) => value < 0 ? sum : sum + 1, 0);
+                        return sumb - suma;
+                    });
+                    const sorted = {};
+                    for (const key of keys) {
+                        sorted[key] = results[area][key];
+                    }
+                    results[area] = sorted;
                 }
                 ui.result.innerText = JSON.stringify(results,null,2);
             };
