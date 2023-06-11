@@ -11,10 +11,26 @@
                 mydata();
                 ui.data = document.querySelector('.data');
                 ui.result = document.querySelector('.result');
-                ui.data.innerText = JSON.stringify(areas) + JSON.stringify(defs) + JSON.stringify(emps);
+                ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
             };
             function calc() {
-                
+                const results = {};
+                for (const area in areas) {
+                    for (const emp1 in emps) {
+                        for (const emp2 in emps) {
+                            if (emp1 === emp2) continue;
+                            for (const emp3 in emps) {
+                                if (emp1 === emp3 || emp2 === emp3) continue;
+                                results[area][`${emp1}+${emp2}+${emp3}`] = [
+                                    emps[emp1][0]+emps[emp2][0]+emps[emp3][0],
+                                    emps[emp1][1]+emps[emp2][1]+emps[emp3][1],
+                                    emps[emp1][2]+emps[emp2][2]+emps[emp3][2]
+                                ];
+                            }
+                        }
+                    }
+                }
+                ui.result.innerText = JSON.stringify(results,null,2);
             };
             function mydata() {
                 Object.assign(areas, {
