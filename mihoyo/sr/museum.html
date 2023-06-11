@@ -3,6 +3,166 @@
     <head>
         <title>冬城博物奇珍簿</title>
         <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0 user-scalable=yes" />
+        <style type="text/css">
+            body {
+                line-height: 1.2;
+            }
+            .ui {
+                display: flex;
+                border: 5px double #ddd;
+            }
+            .areas {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                background: black;
+                color: white;
+                padding: 20px;
+            }
+            .area-switch {
+                display: flex;
+            }
+            .area-prev, .area-next {
+                flex: none;
+                border: 1px solid white;
+                border-radius: 50%;
+                width: 1.2em;
+                height: 1.2em;
+                text-align: center;
+                cursor: pointer;
+            }
+            .area-name {
+                flex: 1;
+                text-align: center;
+            }
+            .area-info {
+                text-align: center;
+                font-size: large;
+                font-weight: bold;
+                color: gold;
+            }
+            .area-values {
+                display: flex;
+                flex-direction: column;
+            }
+            .area-value {
+                display: flex;
+                flex-direction: column;
+            }
+            .area-value-text {
+                display: flex;
+            }
+            .area-value-name {
+                flex: 1;
+            }
+            .area-value-process {
+                position: relative;
+                background-color: #ddd;
+                height: .5em;
+            }
+            .area-process-sum {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: calc(70 / 500 * 100%);
+                background-color: red;
+            }
+            .area-process-max {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                width: calc(240 / 500 * 100%);
+                border-right: 2px solid white;
+            }
+            .area-emps {
+                margin-top: 10px;
+                align-self: center;
+                display: flex;
+                gap: 10px;
+            }
+            .area-emp {
+                border: 1px solid white;
+                width: 50px;
+                height: 60px;
+            }
+            .content {
+                flex: 2;
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+            }
+            .emps {
+                flex: 1;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                align-items: start;
+                gap: 10px;
+                overflow-y: auto;
+            }
+            .emp {
+                display: flex;
+                flex-direction: column;
+                background-color: #ddd;
+                border-radius: 2px;
+                padding: 5px;
+            }
+            .emp-values {
+                background-color: white;
+                color: black;
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+                gap: 5px;
+            }
+            .emp-value {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+            .emp-value-text {
+                flex: none;
+            }
+            .emp-value-process {
+                flex: 1;
+                position: relative;
+                background-color: #ddd;
+                height: .5em;
+            }
+            .emp-value-sum {
+                position: absolute;
+                left: 0;
+                top: 0;
+                background-color: black;
+                height: 100%;
+                width: calc(68 / 100 * 100%);
+            }
+            .emp-name {
+                background-color: black;
+                color: white;
+                text-align: center;
+            }
+            .btns {
+                flex: none;
+                display: flex;
+                justify-content: end;
+                padding-top: 10px;
+                gap: 10px;
+            }
+            .btn {
+                cursor: pointer;
+                min-width: 8em;
+                height: 2em;
+                line-height: 2em;
+                border-radius: 1em;
+                border: 1px solid #ddd;
+                text-align: center;
+            }
+            .btn.primary {
+                background-color: gold;
+            }
+        </style>
         <script type="text/javascript">
             const ui = {};
             const areas = {};
@@ -12,7 +172,7 @@
                 mydata();
                 ui.data = document.querySelector('.data');
                 ui.result = document.querySelector('.result');
-                ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
+                //ui.data.innerText = JSON.stringify(areas,null,2) + JSON.stringify(defs,null,2) + JSON.stringify(emps,null,2);
             };
             function calc() {
                 const values = {};
@@ -78,8 +238,96 @@
         </script>
     </head>
     <body onload="init()">
-        <pre class="data"></pre>
-        <button onclick="calc()">计算</button>
-        <pre class="result"></pre>
+        <div class="ui">
+            <div class="areas">
+                <div class="area-switch">
+                    <div class="area-prev">&lt;</div>
+                    <div class="area-name">综合区-外</div>
+                    <div class="area-next">&gt;</div>
+                </div>
+                <div class="area-info">C</div>
+                <div class="area-values">
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">游览时长</div>
+                            <div class="area-value-def">70</div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-sum">70</div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max">240</div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum"></div>
+                            <div class="area-process-max"></div>
+                        </div>
+                    </div>
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">科普价值</div>
+                            <div class="area-value-def"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-sum"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max"></div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum"></div>
+                            <div class="area-process-max"></div>
+                        </div>
+                    </div>
+                    <div class="area-value">
+                        <div class="area-value-text">
+                            <div class="area-value-name">吸引人流</div>
+                            <div class="area-value-def"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-sum"></div>
+                            <div class="area-value-split">/</div>
+                            <div class="area-value-max"></div>
+                        </div>
+                        <div class="area-value-process">
+                            <div class="area-process-sum"></div>
+                            <div class="area-process-max"></div>
+                        </div>
+                    </div>
+                    <div class="area-emps">
+                        <div class="area-emp"></div>
+                        <div class="area-emp"></div>
+                        <div class="area-emp"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="content">
+                <div class="emps">
+                    <div class="emp">
+                        <div class="emp-values">
+                            <div class="emp-value">
+                                <div class="emp-value-text">68</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                            <div class="emp-value">
+                                <div class="emp-value-text">57</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                            <div class="emp-value">
+                                <div class="emp-value-text">10</div>
+                                <div class="emp-value-process">
+                                    <div class="emp-value-sum"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="emp-name">希露瓦</div>
+                    </div>
+                </div>
+                <div class="btns">
+                    <div class="btn default" onclick="clear()">重置</div>
+                    <div class="btn primary" onclick="calc()">计算</div>
+                </div>
+            </div>
+        </div>
+        <div class="result"></div>
     </body>
 </html>
