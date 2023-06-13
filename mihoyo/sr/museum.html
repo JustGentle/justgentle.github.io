@@ -348,6 +348,7 @@
                     showArea(Object.keys(areas)[0]);
                 }
                 showEmps();
+                alert('已加载');
             }
             function saveData() {
                 localStorage.setItem("areas", JSON.stringify(areas));
@@ -357,10 +358,7 @@
             }
             function clearData() {
                 if (!window.confirm("确定重置为空数据？")) return;
-                areas = {};
-                defs = {};
-                emps = {};
-                saveData();
+                localStorage.clear();
                 loadData();
             }
             function switchEmp() {
@@ -403,7 +401,7 @@
                                 </div>
                                 <div class="area-value-split">/</div>
                                 <div class="area-value-max">
-                                    <input type="number" data-value="1" onchange="setDefValue(this)" value="${max[1]}">
+                                    <input type="number" data-value="1" onchange="setAreaValue(this)" value="${max[1]}">
                                 </div>
                             </div>
                             <div class="area-value-process">
@@ -419,7 +417,7 @@
                                 </div>
                                 <div class="area-value-split">/</div>
                                 <div class="area-value-max">
-                                    <input type="number" data-value="2" onchange="setDefValue(this)" value="${max[2]}">
+                                    <input type="number" data-value="2" onchange="setAreaValue(this)" value="${max[2]}">
                                 </div>
                             </div>
                             <div class="area-value-process">
