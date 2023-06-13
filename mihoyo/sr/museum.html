@@ -8,9 +8,32 @@
                 line-height: 1.2;
                 font-size: 14px;
             }
+            input::-webkit-inner-spin-button {
+                -webkit-appearance: none !important;
+            }
+            input::-webkit-outer-spin-button {
+                -webkit-appearance: none !important;
+            }
+            input {
+                color: inherit;
+                background-color: transparent;
+                border: none;
+            }
+            input[type="number"] {
+                width: 2em;
+            }
+            input[type="text"] {
+                text-align: center;
+            }
+            textarea {
+                height: 396px;
+                width: 100%;
+                resize: vertical;
+            }
             .data {
                 display: flex;
                 border: 5px double #ddd;
+                max-height: 500px;
             }
             .area {
                 flex: 1;
@@ -164,6 +187,7 @@
             .btns {
                 flex: none;
                 display: flex;
+                flex-wrap: wrap;
                 justify-content: end;
                 padding-top: 10px;
                 gap: 10px;
@@ -203,22 +227,21 @@
         </style>
         <script type="text/javascript">
             const ui = {};
-            const areas = {};
-            const defs = {};
-            const emps = {};
             const levels = ['C','B','A','S'];
+            let areas = {};
+            let defs = {};
+            let emps = {};
             let currentArea = '';
             let sums = {};
             let results = {};
+            let editing = false;
             function init() {
-                mydata();
                 ui.data = document.querySelector('.data');
+                ui.area = ui.data.querySelector('.area');
+                ui.emps = ui.data.querySelector('.content>.emps');
                 ui.btn = document.querySelector('.btn.primary');
                 ui.result = document.querySelector('.result');
-                ui.area = ui.data.querySelector('.area');
-                if (Object.keys(areas).length) {
-                    setArea(Object.keys(areas)[0]);
-                }
+                loadData();
             };
             function calc() {
                 ui.btn.disabled = true;
@@ -266,7 +289,7 @@
                     for (const key of keys) {
                         sorted[key] = results[area][key];
                         if (++count > max) break;
-                        addResult(area, key);
+                        showResult(area, key);
                     }
                     results[area] = sorted;
                 }
@@ -284,7 +307,7 @@
                 let index = keys.indexOf(currentArea);
                 index--;
                 if (index < 0) index = keys.length - 1;
-                setArea(keys[index]);
+                showArea(keys[index]);
             }
             function nextArea() {
                 const keys = Object.keys(areas);
@@ -292,9 +315,59 @@
                 let index = keys.indexOf(currentArea);
                 index++;
                 if (index >= keys.length) index = 0;
-                setArea(keys[index]);
+                showArea(keys[index]);
             }
-            function setArea(area) {
+            function loadData() {
+                Object.assign(areas, {
+                    "综合区-外": [240,195,235],
+                    "综合区-内": [205,245,150],
+                    "工业区": [225,280,320],
+                    "历史区": [0,0,0]
+                }, JSON.parse(localStorage.getItem("areas")));
+                Object.assign(defs, {
+                    "综合区-外": [70,70,70],
+                    "综合区-内": [90,90,90],
+                    "工业区": [150,140,140],
+                    "历史区": [0,0,0]
+                }, JSON.parse(localStorage.getItem("defs")));
+                Object.assign(emps, {
+                    "希露瓦": [68,57,10],
+                    "匹克": [44,54,10],
+                    "尤利安": [52,20,36],
+                    "吉尔伯特": [36,40,20],
+                    "莉拉": [52,14,30],
+                    "费斯曼": [50,29,17],
+                    "佩拉": [30,30,30],
+                    "亚诺": [40,8,30],
+                    "伊蕾恩": [26,26,26],
+                    "希露瓦的狂热粉丝": [20,44,14]
+                }, JSON.parse(localStorage.getItem("emps")));
+
+                ui.area.innerHTML = '';
+                if (Object.keys(areas).length) {
+                    showArea(Object.keys(areas)[0]);
+                }
+                showEmps();
+            }
+            function saveData() {
+                localStorage.setItem("areas", JSON.stringify(areas));
+                localStorage.setItem("defs", JSON.stringify(defs));
+                localStorage.setItem("emps", JSON.stringify(emps));
+                alert('已保存');
+            }
+            function clearData() {
+                if (!window.confirm("确定重置为空数据？")) return;
+                areas = {};
+                defs = {};
+                emps = {};
+                saveData();
+                loadData();
+            }
+            function switchEmp() {
+                editing = !editing;
+                showEmps();
+            }
+            function showArea(area) {
                 currentArea = area;
                 const sum = defs[area];
                 const max = areas[area];
@@ -309,9 +382,13 @@
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">游览时长</div>
-                                <div class="area-value-sum ${sum[0]>=max[0]?'success':'failed'}">${sum[0]}</div>
+                                <div class="area-value-sum ${sum[0]>=max[0]?'success':'failed'}">
+                                    <input type="number" data-value="0" onchange="setDefValue(this)" value="${sum[0]}">
+                                </div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${max[0]}</div>
+                                <div class="area-value-max">
+                                    <input type="number" data-value="0" onchange="setAreaValue(this)" value="${max[0]}">
+                                </div>
                             </div>
                             <div class="area-value-process">
                                 <div class="area-process-sum ${sum[0]>=max[0]?'success':'failed'}" style="width:${sum[0]/500.0*100}%"></div>
@@ -321,9 +398,13 @@
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">科普价值</div>
-                                <div class="area-value-sum ${sum[1]>=max[1]?'success':'failed'}">${sum[1]}</div>
+                                <div class="area-value-sum ${sum[1]>=max[1]?'success':'failed'}">
+                                    <input type="number" data-value="1" onchange="setDefValue(this)" value="${sum[1]}">
+                                </div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${max[1]}</div>
+                                <div class="area-value-max">
+                                    <input type="number" data-value="1" onchange="setDefValue(this)" value="${max[1]}">
+                                </div>
                             </div>
                             <div class="area-value-process">
                                 <div class="area-process-sum ${sum[1]>=max[1]?'success':'failed'}" style="width:${sum[1]/500.0*100}%"></div>
@@ -333,9 +414,13 @@
                         <div class="area-value">
                             <div class="area-value-text">
                                 <div class="area-value-name">吸引人流</div>
-                                <div class="area-value-sum ${sum[2]>=max[2]?'success':'failed'}">${sum[2]}</div>
+                                <div class="area-value-sum ${sum[2]>=max[2]?'success':'failed'}">
+                                    <input type="number" data-value="2" onchange="setDefValue(this)" value="${sum[2]}">
+                                </div>
                                 <div class="area-value-split">/</div>
-                                <div class="area-value-max">${max[2]}</div>
+                                <div class="area-value-max">
+                                    <input type="number" data-value="2" onchange="setDefValue(this)" value="${max[2]}">
+                                </div>
                             </div>
                             <div class="area-value-process">
                                 <div class="area-process-sum ${sum[2]>=max[2]?'success':'failed'}" style="width:${sum[2]/500.0*100}%"></div>
@@ -354,7 +439,65 @@
                 ui.area = ui.data.querySelector('.area');
                 return html;
             }
-            function addResult(area, names) {
+            function showEmp(emp) {
+                const sum = emps[emp];
+                const html = `<div class="emp" data-name="${emp}">
+                    <div class="emp-values">
+                        <div class="emp-value">
+                            <div class="emp-value-text">
+                                <input type="number" data-name="${emp}" data-value="0" onchange="setEmpValue(this)" value="${sum[0]}">
+                            </div>
+                            <div class="emp-value-process">
+                                <div class="emp-value-sum" style="width:${sum[0]}%"></div>
+                            </div>
+                        </div>
+                        <div class="emp-value">
+                            <div class="emp-value-text">
+                                <input type="number" data-name="${emp}" data-value="1" onchange="setEmpValue(this)" value="${sum[1]}">
+                            </div>
+                            <div class="emp-value-process">
+                                <div class="emp-value-sum" style="width:${sum[1]}%"></div>
+                            </div>
+                        </div>
+                        <div class="emp-value">
+                            <div class="emp-value-text">
+                                <input type="number" data-name="${emp}" data-value="2" onchange="setEmpValue(this)" value="${sum[2]}">
+                            </div>
+                            <div class="emp-value-process">
+                                <div class="emp-value-sum" style="width:${sum[2]}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="emp-name">
+                        <input type="text" data-name="${emp}" onchange="setEmpName(this)" value="${emp}">
+                    </div>
+                </div>`;
+
+                let elem = ui.emps.querySelector(`[data-name="${emp}"]`);
+                if (!elem) {
+                    elem = document.createElement('div');
+                    ui.emps.appendChild(elem);
+                }
+                elem.outerHTML = html;
+                return html;
+            }
+            function showEmps() {
+                ui.emps.innerHTML = '';
+                if (editing) {
+                    let elem = ui.emps.querySelector('textarea');
+                    if (!elem) {
+                        elem = document.createElement('textarea');
+                        ui.emps.appendChild(elem);
+                        elem.addEventListener('change', setEmps, false)
+                    }
+                    elem.value = JSON.stringify(emps, null, 2);
+                } else if (Object.keys(emps).length) {
+                    for (const emp in emps) {
+                        showEmp(emp);
+                    }
+                }
+            }
+            function showResult(area, names) {
                 const namearr = names.split('+');
                 const sum = sums[area][names];
                 const max = areas[area];
@@ -414,28 +557,42 @@
                 elem.outerHTML = html;
                 return html;
             }
-            function mydata() {
-                Object.assign(areas, {
-                    "综合区-外": [240,195,235],
-                    "综合区-内": [205,245,150]
-                });
-                Object.assign(defs, {
-                    "综合区-外": [70,70,70],
-                    "综合区-内": [90,90,90]
-                });
-                Object.assign(emps, {
-                    "希露瓦": [68,57,10],
-                    "匹克": [44,54,10],
-                    "尤利安": [52,20,36],
-                    "吉尔伯特": [36,40,20],
-                    "莉拉": [52,14,30],
-                    "费斯曼": [50,29,17],
-                    "佩拉": [30,30,30],
-                    "亚诺": [40,8,30],
-                    "伊蕾恩": [26,26,26],
-                    "希露瓦的狂热粉丝": [20,44,14]
-                });
-            };
+            function setDefValue(e) {
+                const index = +e.getAttribute('data-value');
+                const val = +e.value;
+                defs[currentArea][index] = val;
+                showArea(currentArea);
+            }
+            function setAreaValue(e) {
+                const index = +e.getAttribute('data-value');
+                const val = +e.value;
+                areas[currentArea][index] = val;
+                showArea(currentArea);
+            }
+            function setEmpValue(e) {
+                const name = e.getAttribute('data-name');
+                const index = +e.getAttribute('data-value');
+                const val = +e.value;
+                emps[name][index] = val;
+                showEmp(name);
+            }
+            function setEmpName(e) {
+                const name = e.getAttribute('data-name');
+                const val = e.value;
+                if (name == val) return;
+                emps[val] = emps[name];
+                delete emps[name];
+                e.setAttribute('data-name', val);
+            }
+            function setEmps() {
+                const val = this.value;
+                if (!val) return;
+                try {
+                    emps = JSON.parse(val);
+                } catch (error) {
+                    alert(error);
+                }
+            }
         </script>
     </head>
     <body onload="init()">
@@ -444,32 +601,12 @@
             </div>
             <div class="content">
                 <div class="emps">
-                    <div class="emp">
-                        <div class="emp-values">
-                            <div class="emp-value">
-                                <div class="emp-value-text">68</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                            <div class="emp-value">
-                                <div class="emp-value-text">57</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                            <div class="emp-value">
-                                <div class="emp-value-text">10</div>
-                                <div class="emp-value-process">
-                                    <div class="emp-value-sum"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="emp-name">希露瓦</div>
-                    </div>
                 </div>
                 <div class="btns">
-                    <!--<div class="btn default" onclick="clear()">重置</div>-->
+                    <div class="btn default" onclick="clearData()">重置数据</div>
+                    <div class="btn default" onclick="loadData()">加载数据</div>
+                    <div class="btn default" onclick="saveData()">保存数据</div>
+                    <div class="btn secondary" onclick="switchEmp()">切换脚本</div>
                     <button class="btn primary" onclick="calc()">计算</div>
                 </div>
             </div>
